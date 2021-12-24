@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <math.h>
+#include <omp.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../baseline/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../baseline/stb_image_write.h"
+
+#define THREADS 8
 
 void convert_openmp_baseline(unsigned char *img, int width, int height, int channels, unsigned char *result)
 {
@@ -15,7 +18,40 @@ void convert_openmp_baseline(unsigned char *img, int width, int height, int chan
     {
         for (int y = 0; y < height; y++)
         {
-            result[y * width + x] = 0.2126 * img[(y * width + x) * 3] + 0.7152 * img[(y * width + x) * 3 + 1] + 0.0722 * img[(y * width + x) * 3 + 2];
+            result[y * width + x] =
+                0.2126 * img[(y * width + x) * channels]        // red
+                + 0.7152 * img[(y * width + x) * channels + 1]  // green
+                + 0.0722 * img[(y * width + x) * channels + 2]; // blue
+        }
+    }
+}
+
+void convert_openmp_memory(unsigned char *img, int width, int height, int channels, unsigned char *result)
+{
+    int pixel_per_thread = (width * height) / THREADS;
+    int char_per_thread = pixel_per_thread * channels;
+#pragma omp parallel for
+    for (int thread = 0; thread < THREADS; thread++)
+    {
+        if (thread + 1 == THREADS)
+        {
+            for (int i = pixel_per_thread * thread; i < width * height; i++)
+            {
+                result[i] =
+                    0.2126 * img[(i * channels) + 1]    // red
+                    + 0.7152 * img[(i * channels) + 2]  // green
+                    + 0.0722 * img[(i * channels) + 3]; // blue
+            }
+        }
+        else
+        {
+            for (int i = pixel_per_thread * thread; i < pixel_per_thread * (thread + 1); i++)
+            {
+                result[i] =
+                    0.2126 * img[(i * channels) + 1]    // red
+                    + 0.7152 * img[(i * channels) + 2]  // green
+                    + 0.0722 * img[(i * channels) + 3]; // blue
+            }
         }
     }
 }
@@ -27,7 +63,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
@@ -39,6 +76,7 @@ int main()
     // Allocate target array for grayscale image
     unsigned char *gray = malloc(width * height);
     double mflops_sum = 0.0;
+    double time_sum = 0.0;
 
     for (int i = 0; i < runs; i++)
     {
@@ -47,7 +85,9 @@ int main()
         gettimeofday(&start, 0);
 
         // convert
-        convert_openmp_baseline(img, width, height, channels, gray);
+        omp_set_num_threads(THREADS);
+        // convert_openmp_baseline(img, width, height, channels, gray);
+        convert_openmp_memory(img, width, height, channels, gray);
 
         // end time tracking
         struct timeval end;
@@ -64,11 +104,12 @@ int main()
         // Print FLOP/s
         double mflops = flop / 1000000.0 / sec;
         mflops_sum += mflops;
+        time_sum += sec;
         printf("%8.2f MFLOP/s\n", mflops);
     }
 
-    printf("average: %8.2f MFLOP/s\n", mflops_sum / runs);
+    printf("average: %8.2f MFLOP/s - %8.6f seconds\n", mflops_sum / runs, time_sum / runs);
 
-    printf("Writing image\n");
-    stbi_write_jpg("grayscale.jpg", width, height, 1, gray, 95);
+    // printf("Writing image\n");
+    // stbi_write_jpg("grayscale.jpg", width, height, 1, gray, 95);
 }

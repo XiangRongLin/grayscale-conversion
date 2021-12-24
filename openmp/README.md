@@ -1,4 +1,4 @@
-# Install openMp
+# Install openMP
 It is bundled with you gcc installation.
-## Windows
+## Mingw
 Use `mingw-get install mingw32-pthreads-w32`
