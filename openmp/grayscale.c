@@ -13,6 +13,7 @@
 #include "algorithms/memory.c"
 #include "algorithms/memory_simd.c"
 #include "algorithms/memory_simd_fma.c"
+#include "algorithms/memory_simd_fma2.c"
 
 #define THREADS 8
 
@@ -23,8 +24,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
@@ -49,7 +50,8 @@ int main()
         // convert_openmp_baseline(img, width, height, channels, THREADS, gray);
         // convert_openmp_memory(img, width, height, channels, THREADS, gray);
         // convert_openmp_memory_simd(img, width, height, channels, THREADS, gray);
-        convert_openmp_memory_simd_fma(img, width, height, channels, THREADS, gray);
+        // convert_openmp_memory_simd_fma(img, width, height, channels, THREADS, gray);
+        convert_openmp_memory_simd_fma2(img, width, height, channels, THREADS, gray);
 
         // end time tracking
         struct timeval end;

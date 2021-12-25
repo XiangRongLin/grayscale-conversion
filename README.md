@@ -18,6 +18,8 @@ Best performance with 8 threads which makes sense because it is a 4 core/8 logic
 
 With a bigger image the best performance is still with 8 threads, but roughly 35% worse.
 
+---
+
 We can optimize the memory access by having each thread only calculate the gray value for a consecutive area.
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
@@ -25,6 +27,8 @@ We can optimize the memory access by having each thread only calculate the gray 
 |convert_openmp_memory|15360x8640|8|2682|0.2478|
 
 This gives us a 650% improvement compared to before for the small image and bringing the big image to the same performance
+
+---
 
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
@@ -36,3 +40,12 @@ This could be due to the overhead of the preparation for FMA.
 - The single array with the rgb values was split into 3 arrays each only with one of the 3 values.
 - Each iteration needs to access values from all 3 arrays. Depending on cache size not all values can be held in cache and need to be reloaded on the next iteration making the memory access continious useless.
 - The pixel is saved as 8-bit `unsigned char`, which needs to be converted to a 32-bit `float` for the calculation and then back again to 8-bit `unsigned char` for writing the image.
+
+---
+
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|convert_openmp_memory_simd_fma2|7680x4320|8|2204|0.0754|
+|convert_openmp_memory_simd_fma2|15360x8640|8|2353|0.2821|
+
+This can be improved by 30% by not splitting up the img into 3 array beforehand, but doing it at the place where it's needed.
