@@ -1,5 +1,6 @@
 *.jpg
 !images/*.jpg
+.vscode
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,c,c++,cuda,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,c,c++,cuda,visualstudiocode

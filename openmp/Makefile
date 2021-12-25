@@ -1,2 +1,2 @@
-all:
-	gcc -fopenmp grayscale.c
+gray:
+	gcc -fopenmp grayscale.c -mavx -lm
