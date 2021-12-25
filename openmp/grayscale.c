@@ -12,6 +12,16 @@
 
 #define THREADS 8
 
+void *safe_malloc(size_t n)
+{
+    void *p = malloc(n);
+    if (p == NULL) {
+        fprintf(stderr, "Fatal: failed to allocate %zu bytes.\n", n);
+        abort();
+    }
+    return p;
+}
+
 void convert_openmp_baseline(unsigned char *img, int width, int height, int channels, unsigned char *result)
 {
 #pragma omp parallel for collapse(2)
@@ -69,7 +79,7 @@ void convert_openmp_memory_simd(unsigned char *img, int width, int height, int c
             end = pixel_per_thread * (thread + 1);
         }
 
-        float *gray_pixel_values = malloc(4*sizeof(float));
+        float *gray_pixel_values = malloc(4 * sizeof(float));
         __m128 factors = _mm_setr_ps(0.2126, 0.7152, 0.0722, 0);
 
         for (int i = pixel_per_thread * thread; i < end; i++)
@@ -84,6 +94,103 @@ void convert_openmp_memory_simd(unsigned char *img, int width, int height, int c
     }
 }
 
+void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, int channels, unsigned char *result)
+{
+    int pixel_per_thread_unaligned = (width * height) / THREADS;
+    // Each FMA instruction can calculate 4 pixels at once, so we need a worksize that is a multiple of it.
+    // Leftover will need to be handled seperatly without FMA by the last thread.
+    int pixel_per_thread_aligned = ((int)pixel_per_thread_unaligned / 4) * 4;
+
+    int size = width * height;
+
+    // Split up rgb components of image.
+    float *r_img = safe_malloc(size * sizeof(float));
+    float *g_img = safe_malloc(size * sizeof(float));
+    float *b_img = safe_malloc(size * sizeof(float));
+// #pragma omp parallel for
+    for (int thread = 0; thread < THREADS; thread++)
+    {
+        int end;
+        if (thread + 1 == THREADS)
+        {
+            end = size;
+        }
+        else
+        {
+            end = pixel_per_thread_aligned * (thread + 1);
+        }
+
+        for (int i = pixel_per_thread_aligned * thread; i < end; i++)
+        {
+            r_img[i] = (float)img[(i * channels)];
+            g_img[i] = (float)img[(i * channels) + 1];
+            b_img[i] = (float)img[(i * channels) + 2];
+        }
+    }
+
+    __m128 r_factor = _mm_set_ps(0.2126, 0.2126, 0.2126, 0.2126);
+    __m128 g_factor = _mm_set_ps(0.7152, 0.7152, 0.7152, 0.7152);
+    __m128 b_factor = _mm_set_ps(0.0722, 0.0722, 0.0722, 0.0722);
+
+#pragma omp parallel for
+    for (int thread = 0; thread < THREADS; thread++)
+    {
+        int end;
+        if (thread + 1 == THREADS)
+        {
+            end = ((int)size / 4) * 4;
+        }
+        else
+        {
+            end = pixel_per_thread_aligned * (thread + 1);
+        }
+
+        float *r_pointer, *g_pointer, *b_pointer;
+        __m128 r_vector, g_vector, b_vector, gray_vector;
+        __m128i gray_vector_int;
+        for (int i = pixel_per_thread_aligned * thread; i < end; i += 4)
+        {
+            r_pointer = &r_img[i];
+            g_pointer = &g_img[i];
+            b_pointer = &b_img[i];
+
+            r_vector = _mm_load_ps(r_pointer);
+            g_vector = _mm_load_ps(g_pointer);
+            b_vector = _mm_load_ps(b_pointer);
+
+            // calculate gray value with FMA
+            gray_vector = _mm_setzero_ps();
+            gray_vector = _mm_fmadd_ps(r_vector, r_factor, gray_vector);
+            gray_vector = _mm_fmadd_ps(g_vector, g_factor, gray_vector);
+            gray_vector = _mm_fmadd_ps(b_vector, b_factor, gray_vector);
+
+            // convert float to int and store it
+            // https://stackoverflow.com/q/29856006
+            gray_vector_int = _mm_cvtps_epi32(gray_vector);
+            gray_vector_int =_mm_packus_epi32(gray_vector_int,gray_vector_int);
+            gray_vector_int =_mm_packus_epi16(gray_vector_int,gray_vector_int);
+
+            *(int*)(&result[i]) = _mm_cvtsi128_si32(gray_vector_int);
+        }
+    }
+
+// calculate the leftover pixels which result from the image having a
+// pixel count that is a multiple of 4 should be 3 pixels at most
+    int start = ((int)size / 4) * 4;
+#pragma omp parallel for
+    for (int i = start; i < size; i++)
+    {
+        result[i] =
+            0.2126 * img[(i * channels)]        // red
+            + 0.7152 * img[(i * channels) + 1]  // green
+            + 0.0722 * img[(i * channels) + 2]; // blue
+    }
+
+    free(r_img);
+    free(g_img);
+    free(b_img);
+}
+
 int main()
 {
     int runs = 20;
@@ -91,8 +198,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
@@ -116,7 +223,8 @@ int main()
         omp_set_num_threads(THREADS);
         // convert_openmp_baseline(img, width, height, channels, gray);
         // convert_openmp_memory(img, width, height, channels, gray);
-        convert_openmp_memory_simd(img, width, height, channels, gray);
+        // convert_openmp_memory_simd(img, width, height, channels, gray);
+        convert_openmp_memory_simd_fma(img, width, height, channels, gray);
 
         // end time tracking
         struct timeval end;
