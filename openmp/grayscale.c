@@ -15,7 +15,8 @@
 void *safe_malloc(size_t n)
 {
     void *p = malloc(n);
-    if (p == NULL) {
+    if (p == NULL)
+    {
         fprintf(stderr, "Fatal: failed to allocate %zu bytes.\n", n);
         abort();
     }
@@ -104,10 +105,10 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
     int size = width * height;
 
     // Split up rgb components of image.
-    float *r_img = safe_malloc(size * sizeof(float));
-    float *g_img = safe_malloc(size * sizeof(float));
-    float *b_img = safe_malloc(size * sizeof(float));
-// #pragma omp parallel for
+    unsigned char *r_img = safe_malloc(size * sizeof(unsigned char));
+    unsigned char *g_img = safe_malloc(size * sizeof(unsigned char));
+    unsigned char *b_img = safe_malloc(size * sizeof(unsigned char));
+    #pragma omp parallel for
     for (int thread = 0; thread < THREADS; thread++)
     {
         int end;
@@ -122,9 +123,9 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
 
         for (int i = pixel_per_thread_aligned * thread; i < end; i++)
         {
-            r_img[i] = (float)img[(i * channels)];
-            g_img[i] = (float)img[(i * channels) + 1];
-            b_img[i] = (float)img[(i * channels) + 2];
+            r_img[i] = img[(i * channels)];
+            g_img[i] = img[(i * channels) + 1];
+            b_img[i] = img[(i * channels) + 2];
         }
     }
 
@@ -132,7 +133,7 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
     __m128 g_factor = _mm_set_ps(0.7152, 0.7152, 0.7152, 0.7152);
     __m128 b_factor = _mm_set_ps(0.0722, 0.0722, 0.0722, 0.0722);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int thread = 0; thread < THREADS; thread++)
     {
         int end;
@@ -145,18 +146,19 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
             end = pixel_per_thread_aligned * (thread + 1);
         }
 
-        float *r_pointer, *g_pointer, *b_pointer;
+        unsigned char *r_pointer, *g_pointer, *b_pointer;
         __m128 r_vector, g_vector, b_vector, gray_vector;
         __m128i gray_vector_int;
         for (int i = pixel_per_thread_aligned * thread; i < end; i += 4)
         {
-            r_pointer = &r_img[i];
-            g_pointer = &g_img[i];
-            b_pointer = &b_img[i];
+            // Load 16 8-bit unsigned ints as a 128-bit signed int
+            // convert unsigned 8-bit unsigned int to 32-bit signed int
+            // convert 32-bit signed int to single precision float
+            // https://stackoverflow.com/a/12122607
 
-            r_vector = _mm_load_ps(r_pointer);
-            g_vector = _mm_load_ps(g_pointer);
-            b_vector = _mm_load_ps(b_pointer);
+            r_vector = _mm_cvtepi32_ps(_mm_cvtepu8_epi32(_mm_loadu_si128((__m128i*) &r_img[i])));
+            g_vector = _mm_cvtepi32_ps(_mm_cvtepu8_epi32(_mm_loadu_si128((__m128i*) &g_img[i])));
+            b_vector = _mm_cvtepi32_ps(_mm_cvtepu8_epi32(_mm_loadu_si128((__m128i*) &b_img[i])));
 
             // calculate gray value with FMA
             gray_vector = _mm_setzero_ps();
@@ -167,17 +169,16 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
             // convert float to int and store it
             // https://stackoverflow.com/q/29856006
             gray_vector_int = _mm_cvtps_epi32(gray_vector);
-            gray_vector_int =_mm_packus_epi32(gray_vector_int,gray_vector_int);
-            gray_vector_int =_mm_packus_epi16(gray_vector_int,gray_vector_int);
+            gray_vector_int = _mm_packus_epi32(gray_vector_int, gray_vector_int);
+            gray_vector_int = _mm_packus_epi16(gray_vector_int, gray_vector_int);
 
-            *(int*)(&result[i]) = _mm_cvtsi128_si32(gray_vector_int);
+            *(int *)(&result[i]) = _mm_cvtsi128_si32(gray_vector_int);
         }
     }
 
-// calculate the leftover pixels which result from the image having a
-// pixel count that is a multiple of 4 should be 3 pixels at most
+    // calculate the leftover pixels which result from the image having a
+    // pixel count that is a multiple of 4 should be 3 pixels at most
     int start = ((int)size / 4) * 4;
-#pragma omp parallel for
     for (int i = start; i < size; i++)
     {
         result[i] =
@@ -198,8 +199,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");

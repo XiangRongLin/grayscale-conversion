@@ -25,3 +25,14 @@ We can optimize the memory access by having each thread only calculate the gray 
 |convert_openmp_memory|15360x8640|8|2682|0.2478|
 
 This gives us a 650% improvement compared to before for the small image and bringing the big image to the same performance
+
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|convert_openmp_memory_simd_fma|7680x4320|8|1710|0.0975|
+|convert_openmp_memory_simd_fma|15360x8640|8|1790|0.3711|
+
+While keeping the previous adjustments as is but using fused multiply add (FMA) gives a 35% regression in performance.
+This could be due to the overhead of the preparation for FMA.
+- The single array with the rgb values was split into 3 arrays each only with one of the 3 values.
+- Each iteration needs to access values from all 3 arrays. Depending on cache size not all values can be held in cache and need to be reloaded on the next iteration making the memory access continious useless.
+- The pixel is saved as 8-bit `unsigned char`, which needs to be converted to a 32-bit `float` for the calculation and then back again to 8-bit `unsigned char` for writing the image.
