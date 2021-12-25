@@ -57,9 +57,9 @@ void convert_openmp_memory(unsigned char *img, int width, int height, int channe
         for (int i = pixel_per_thread * thread; i < end; i++)
         {
             result[i] =
-                0.2126 * img[(i * channels) + 1]    // red
-                + 0.7152 * img[(i * channels) + 2]  // green
-                + 0.0722 * img[(i * channels) + 3]; // blue
+                0.2126 * img[(i * channels)]    // red
+                + 0.7152 * img[(i * channels) + 1]  // green
+                + 0.0722 * img[(i * channels) + 2]; // blue
         }
     }
 }
@@ -85,7 +85,7 @@ void convert_openmp_memory_simd(unsigned char *img, int width, int height, int c
 
         for (int i = pixel_per_thread * thread; i < end; i++)
         {
-            __m128 pixel = _mm_setr_ps((float)img[(i * channels) + 1], (float)img[(i * channels) + 2], (float)img[(i * channels) + 3], 0);
+            __m128 pixel = _mm_setr_ps((float)img[(i * channels)], (float)img[(i * channels) + 1], (float)img[(i * channels) + 2], 0);
             __m128 gray_pixel_values_vector = _mm_mul_ps(pixel, factors);
             _mm_store_ps(gray_pixel_values, gray_pixel_values_vector);
 
@@ -146,7 +146,6 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
             end = pixel_per_thread_aligned * (thread + 1);
         }
 
-        unsigned char *r_pointer, *g_pointer, *b_pointer;
         __m128 r_vector, g_vector, b_vector, gray_vector;
         __m128i gray_vector_int;
         for (int i = pixel_per_thread_aligned * thread; i < end; i += 4)
@@ -176,8 +175,9 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
         }
     }
 
-    // calculate the leftover pixels which result from the image having a
-    // pixel count that is a multiple of 4 should be 3 pixels at most
+    // calculate the leftover pixels which result from the image not having a
+    // pixel count that is a multiple of 4
+    // should be 3 pixels at most
     int start = ((int)size / 4) * 4;
     for (int i = start; i < size; i++)
     {
@@ -199,8 +199,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
@@ -223,9 +223,9 @@ int main()
         // convert
         omp_set_num_threads(THREADS);
         // convert_openmp_baseline(img, width, height, channels, gray);
-        // convert_openmp_memory(img, width, height, channels, gray);
+        convert_openmp_memory(img, width, height, channels, gray);
         // convert_openmp_memory_simd(img, width, height, channels, gray);
-        convert_openmp_memory_simd_fma(img, width, height, channels, gray);
+        // convert_openmp_memory_simd_fma(img, width, height, channels, gray);
 
         // end time tracking
         struct timeval end;
