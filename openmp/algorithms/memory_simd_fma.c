@@ -2,10 +2,13 @@
 
 void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
+    // 128 bit registers, 32 bit floats => 4
+    int floats_per_operation = 4;
+
     int pixel_per_thread_unaligned = (width * height) / threads;
     // Each FMA instruction can calculate 4 pixels at once, so we need a worksize that is a multiple of it.
     // Leftover will need to be handled seperatly without FMA by the last thread.
-    int pixel_per_thread_aligned = ((int)pixel_per_thread_unaligned / 4) * 4;
+    int pixel_per_thread_aligned = ((int)pixel_per_thread_unaligned / floats_per_operation) * floats_per_operation;
 
     int size = width * height;
 
@@ -44,7 +47,7 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
         int end;
         if (thread + 1 == threads)
         {
-            end = ((int)size / 4) * 4;
+            end = ((int)size / floats_per_operation) * floats_per_operation;
         }
         else
         {
@@ -53,7 +56,7 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
 
         __m128 r_vector, g_vector, b_vector, gray_vector;
         __m128i gray_vector_int;
-        for (int i = pixel_per_thread_aligned * thread; i < end; i += 4)
+        for (int i = pixel_per_thread_aligned * thread; i < end; i += floats_per_operation)
         {
             // Load 16 8-bit unsigned ints as a 128-bit signed int
             // convert unsigned 8-bit unsigned int to 32-bit signed int
@@ -83,7 +86,7 @@ void convert_openmp_memory_simd_fma(unsigned char *img, int width, int height, i
     // calculate the leftover pixels which result from the image not having a
     // pixel count that is a multiple of 4
     // should be 3 pixels at most
-    int start = ((int)size / 4) * 4;
+    int start = ((int)size / floats_per_operation) * floats_per_operation;
     for (int i = start; i < size; i++)
     {
         result[i] =
