@@ -49,3 +49,12 @@ This could be due to the overhead of the preparation for FMA.
 |convert_openmp_memory_simd_fma2|15360x8640|8|2353|0.2821|
 
 This can be improved by 30% by not splitting up the img into 3 array beforehand, but doing it at the place where it's needed.
+
+---
+TODO updated to gcc 11, redo previous benchmarks
+
+With the next change we can calculate 8 numbers at once instead of only 4 giving us a xx% improvement. But it is still worse than just using memory alignment without SIMD.
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|convert_openmp_memory_simd_fma_256_bit|7680x4320|8|2987|0.0556|
+|convert_openmp_memory_simd_fma_256_bit|15360x8640|8|3209|0.2068|

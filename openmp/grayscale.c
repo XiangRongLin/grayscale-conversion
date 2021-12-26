@@ -14,6 +14,7 @@
 #include "algorithms/memory_simd.c"
 #include "algorithms/memory_simd_fma.c"
 #include "algorithms/memory_simd_fma2.c"
+#include "algorithms/memory_simd_fma_256_bit.c"
 
 #define THREADS 8
 
@@ -51,7 +52,8 @@ int main()
         // convert_openmp_memory(img, width, height, channels, THREADS, gray);
         // convert_openmp_memory_simd(img, width, height, channels, THREADS, gray);
         // convert_openmp_memory_simd_fma(img, width, height, channels, THREADS, gray);
-        convert_openmp_memory_simd_fma2(img, width, height, channels, THREADS, gray);
+        // convert_openmp_memory_simd_fma2(img, width, height, channels, THREADS, gray);
+        convert_openmp_memory_simd_fma_256_bit(img, width, height, channels, THREADS, gray);
 
         // end time tracking
         struct timeval end;
