@@ -1,6 +1,6 @@
 #include <immintrin.h>
 
-void convert_openmp_memory_simd_fma_512_bit(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     // 512 bit registers, 32 bit floats => 16
     int floats_per_operation = 16;

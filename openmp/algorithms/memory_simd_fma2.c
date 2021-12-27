@@ -1,7 +1,7 @@
 #include <immintrin.h>
 #include <stdio.h>
 
-void convert_openmp_memory_simd_fma2(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     // 128 bit registers, 32 bit floats => 4
     int floats_per_operation = 4;

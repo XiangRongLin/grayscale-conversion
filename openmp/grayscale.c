@@ -9,11 +9,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../baseline/stb_image_write.h"
 
-#include "algorithms/baseline.c"
-#include "algorithms/memory.c"
-#include "algorithms/memory_simd.c"
-#include "algorithms/memory_simd_fma.c"
-#include "algorithms/memory_simd_fma2.c"
+// Comment in whichever algorithm should be used and comment out all the other ones.
+// #include "algorithms/baseline.c"
+// #include "algorithms/memory.c"
+// #include "algorithms/memory_simd.c"
+// #include "algorithms/memory_simd_fma.c"
+// #include "algorithms/memory_simd_fma2.c"
 #include "algorithms/memory_simd_fma_256_bit.c"
 
 #define THREADS 8
@@ -48,12 +49,7 @@ int main()
 
         // convert
         omp_set_num_threads(THREADS);
-        // convert_openmp_baseline(img, width, height, channels, THREADS, gray);
-        // convert_openmp_memory(img, width, height, channels, THREADS, gray);
-        // convert_openmp_memory_simd(img, width, height, channels, THREADS, gray);
-        // convert_openmp_memory_simd_fma(img, width, height, channels, THREADS, gray);
-        // convert_openmp_memory_simd_fma2(img, width, height, channels, THREADS, gray);
-        convert_openmp_memory_simd_fma_256_bit(img, width, height, channels, THREADS, gray);
+        convert(img, width, height, channels, THREADS, gray);
 
         // end time tracking
         struct timeval end;

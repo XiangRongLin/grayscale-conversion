@@ -1,6 +1,6 @@
 #include <immintrin.h>
 
-void convert_openmp_memory_simd(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     int pixel_per_thread = (width * height) / threads;
 #pragma omp parallel for

@@ -1,4 +1,4 @@
-void convert_openmp_baseline(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
 #pragma omp parallel for collapse(2)
     for (int x = 0; x < width; x++)
