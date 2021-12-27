@@ -16,6 +16,7 @@
 // #include "algorithms/memory_simd_fma.c"
 // #include "algorithms/memory_simd_fma2.c"
 #include "algorithms/memory_simd_fma_256_bit.c"
+// #include "algorithms/memory_simd_fma_512_bit.c"
 
 #define THREADS 8
 
