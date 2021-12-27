@@ -23,8 +23,8 @@ With a bigger image the best performance is still with 8 threads, but roughly 35
 We can optimize the memory access by having each thread only calculate the gray value for a consecutive area.
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
-|convert_openmp_memory|7680x4320|8|2628|0.0633|
-|convert_openmp_memory|15360x8640|8|2682|0.2478|
+|convert_openmp_memory|7680x4320|8|3443|0.0633|
+|convert_openmp_memory|15360x8640|8|3713|0.2478|
 
 This gives us a 650% improvement compared to before for the small image and bringing the big image to the same performance
 

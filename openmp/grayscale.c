@@ -16,6 +16,7 @@
 // #include "algorithms/memory_simd_fma.c"
 // #include "algorithms/memory_simd_fma2.c"
 #include "algorithms/memory_simd_fma_256_bit.c"
+// #include "algorithms/memory_simd_256_bit.c"
 // #include "algorithms/memory_simd_fma_512_bit.c"
 
 #define THREADS 8
@@ -27,8 +28,8 @@ int main()
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
