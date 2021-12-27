@@ -31,8 +31,8 @@ void ConvertToGrey(uchar3  *input, unsigned char *output, int rows, int columns)
 int main (){
     int rows,columns,channels,pixel_size;
     unsigned char* Image = stbi_load("../images/15360x8640.jpg", &columns, &rows, &channels, 0);
-    uchar3 *d_rgb_image;
-    unsigned char *h_grey_image, *d_grey_image;
+    uchar3 *d_rgb;
+    unsigned char *h_grey, *d_grey;
 
     pixel_size = columns * rows ;
 /*
@@ -40,14 +40,14 @@ int main (){
         printf("Pixel size: %d\n", pixel_size);
         printf("Channels: %d\n", channels);
 */
-    h_grey_image = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
+    h_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
 
     //Allocate device memory for the image
-    cudaMalloc(&d_rgb_image, sizeof(uchar4) * pixel_size * CHANNELS);
+    cudaMalloc(&d_rgb, sizeof(uchar4) * pixel_size * CHANNELS);
     //allocate device memory for the grey image
-	cudaMalloc(&d_grey_image, sizeof(unsigned char) * pixel_size);
+	cudaMalloc(&d_grey, sizeof(unsigned char) * pixel_size);
     //sets device memory to a value.
-	cudaMemset(d_grey_image, 0, sizeof(unsigned char) * pixel_size);
+	cudaMemset(d_grey, 0, sizeof(unsigned char) * pixel_size);
 
     int thread = 16;
     const dim3 Block(thread, thread);
@@ -57,26 +57,28 @@ int main (){
 
     // measure the time taken to convert the image to grey with copy to device and back to host
     start = clock();
-    cudaMemcpy(d_rgb_image, Image, sizeof(unsigned char) * pixel_size * CHANNELS, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rgb, Image, sizeof(unsigned char) * pixel_size * CHANNELS, cudaMemcpyHostToDevice);
     
     //calls the kernel function
-    ConvertToGrey<<<Grid, Block>>>(d_rgb_image, d_grey_image, rows, columns);
+    ConvertToGrey<<<Grid, Block>>>(d_rgb, d_grey, rows, columns);
         
     // i dont think i need this but i will leave it here..
     // cudaDeviceSynchronize();
-    end = clock();
-    double time =(double)(end-start)/CLOCKS_PER_SEC;
-    printf("gpu execution and copy time is %.30lf\n", time);
+   
 
     // Copy the data back to the host
-    cudaMemcpy(h_grey_image, d_grey_image, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_grey, d_grey, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
+
+     end = clock();
+    double time =(double)(end-start)/CLOCKS_PER_SEC;
+    printf("gpu execution and copy time is %.30lf\n", time);
     
-    // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, h_grey_image, 100);
+    // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, h_grey, 100);
 
     // free the allocated memory on the host and the device
-    free(h_grey_image);
-    cudaFree(d_rgb_image);
-    cudaFree(d_grey_image);
+    free(h_grey);
+    cudaFree(d_rgb);
+    cudaFree(d_grey);
 
     return 0;
 	
