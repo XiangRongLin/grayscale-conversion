@@ -11,12 +11,12 @@
 
 // Comment in whichever algorithm should be used and comment out all the other ones.
 // #include "algorithms/baseline.c"
-#include "algorithms/memory.c"
+// #include "algorithms/memory.c"
 // #include "algorithms/memory_simd.c"
 // #include "algorithms/memory_simd_fma.c"
 // #include "algorithms/memory_simd_fma2.c"
 // #include "algorithms/memory_simd_avx.c"
-// #include "algorithms/memory_simd_sse.c"
+#include "algorithms/memory_simd_sse.c"
 // #include "algorithms/memory_simd_256_bit.c"
 // #include "algorithms/memory_simd_fma_512_bit.c"
 
@@ -24,14 +24,15 @@
 
 int main()
 {
-    int runs = 20;
+    int runs = 1;
 
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
+    // unsigned char *img = stbi_load("../images/small.jpg", &width, &height, &channels, 0);
     //https://photojournal.jpl.nasa.gov/catalog/?IDNumber=PIA03239
-    unsigned char *img = stbi_load("../images/27000x6000.jpg", &width, &height, &channels, 0);
-    // unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
+    // unsigned char *img = stbi_load("../images/27000x6000.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
     // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
