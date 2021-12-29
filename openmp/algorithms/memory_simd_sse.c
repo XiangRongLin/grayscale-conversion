@@ -83,7 +83,7 @@ void convert(unsigned char *img, int width, int height, int channels, int thread
     // Leftover will need to be handled seperatly without FMA by the last thread.
     int pixel_per_thread_aligned = ((int)pixel_per_thread_unaligned / floats_per_operation) * floats_per_operation;
 
-// #pragma omp parallel for
+#pragma omp parallel for
     for (int thread = 0; thread < threads; thread++)
     {
         int end;

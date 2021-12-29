@@ -71,3 +71,11 @@ But now adding an even bigger image of the size 27000x6000 shows a 100% differen
 |memory|27000x6000|8|9833|0.0827|
 |memory_simd_sse|27000x6000|8|6817|0.1199|
 |memory_simd_avx|27000x6000|8|12813|0.0647|
+
+---
+
+final after fixing and improving avx
+
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|memory_simd_avx|27000x6000|8|16294|0.0501|
