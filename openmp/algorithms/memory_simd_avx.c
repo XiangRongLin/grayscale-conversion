@@ -4,7 +4,7 @@
 //Convert from RGBRGBRGB... to RRR..., GGG..., BBB...
 //Input: Two XMM registers (24 uint8 elements) ordered RGBRGB...
 //Output: Three XMM registers ordered RRR..., GGG... and BBB...
-//        Unpack the result from uint8 elements to uint16 elements.
+//        Unpack the result from ui1nt8 elements to uint16 elements.
 static __attribute__((always_inline)) inline void GatherRGBx8(
     const __m256i gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0,
     const __m256i bF_gF_rF_bE_gE_rE_bD_gD_rD_bC_gC_rC_bB_gB_rB_bA,
@@ -116,9 +116,9 @@ static __attribute__((always_inline)) inline __m256i Rgb2Yx8(__m256i rF_rE_rD_rC
     const __m256i b_coef = _mm256_set1_epi16((short)(0.0722 * 32768.0 + 0.5)); //8 coefficients - B scale factor.
 
     //Multiply input elements by 64 for improved accuracy.
-    rF_rE_rD_rC_rB_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0 = _mm256_slli_epi16(rF_rE_rD_rC_rB_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0, 2);
-    gF_gE_gD_gC_gB_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0 = _mm256_slli_epi16(gF_gE_gD_gC_gB_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0, 1);
-    bF_bE_bD_bC_bB_bA_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0 = _mm256_slli_epi16(bF_bE_bD_bC_bB_bA_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0, 2);
+    rF_rE_rD_rC_rB_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0 = _mm256_slli_epi16(rF_rE_rD_rC_rB_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0, 6);
+    gF_gE_gD_gC_gB_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0 = _mm256_slli_epi16(gF_gE_gD_gC_gB_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0, 6);
+    bF_bE_bD_bC_bB_bA_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0 = _mm256_slli_epi16(bF_bE_bD_bC_bB_bA_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0, 6);
 
     //Use the special intrinsic _mm256_mulhrs_epi16 that calculates round(r*r_coef/2^15).
     //Calculate Y = 0.2989*R + 0.5870*G + 0.1140*B (use fixed point computations)
