@@ -23,8 +23,8 @@ With a bigger image the best performance is still with 8 threads, but roughly 35
 We can optimize the memory access by having each thread only calculate the gray value for a consecutive area.
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
-|convert_openmp_memory|7680x4320|8|2628|0.0633|
-|convert_openmp_memory|15360x8640|8|2682|0.2478|
+|convert_openmp_memory|7680x4320|8|3443|0.0633|
+|convert_openmp_memory|15360x8640|8|3713|0.2478|
 
 This gives us a 650% improvement compared to before for the small image and bringing the big image to the same performance
 
@@ -58,3 +58,24 @@ With the next change we can calculate 8 numbers at once instead of only 4 giving
 |---|---|---|---|---|
 |convert_openmp_memory_simd_fma_256_bit|7680x4320|8|2987|0.0556|
 |convert_openmp_memory_simd_fma_256_bit|15360x8640|8|3209|0.2068|
+
+----
+
+TODO using `-O3` now redo benchmarks
+
+Doing the benchmarks with the existing images shows little improvment between using SSE (128 bit vectors) and AVX (256 bit vectors).
+But now adding an even bigger image of the size 27000x6000 shows a 100% difference between the 2.
+
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|memory|27000x6000|8|9833|0.0827|
+|memory_simd_sse|27000x6000|8|6817|0.1199|
+|memory_simd_avx|27000x6000|8|12813|0.0647|
+
+---
+
+final after fixing and improving avx
+
+|Name|image|thread number|MFLOPS/s|time in s|
+|---|---|---|---|---|
+|memory_simd_avx|27000x6000|8|16294|0.0501|
