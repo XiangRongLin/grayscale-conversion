@@ -22,7 +22,8 @@
 - memory is not aligned
 
 ## Solution attempt
-
+### Multi Threaded
+First
 
 ## Implementation
 
@@ -34,15 +35,16 @@ With
 - 20 runs each
 - 27000x6000 pixel image https://photojournal.jpl.nasa.gov/catalog/?IDNumber=PIA03239
 
+### Baseline
+|time in s|megapixel per s|
+|---|---|
+|0.035498|4352.2054|
+
 ### Memory
 
 |thread number|time in s|megapixel per s|
 |---|---|---|
-|12|0.035498|4352.2054|
-|32|0.032019|4825.1565|
-|64|0.031561|4895.1701|
-|128|0.030775|5020.2111|
-|256|0.032250|4790.6095|
+|2.739997| 56.3852|
 
 ### FMA
 

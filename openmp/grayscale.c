@@ -15,7 +15,7 @@
 #include <unistd.h>
 #endif
 
-#include "algorithms/baseline.c"
+#include "algorithms/openmp_baseline.c"
 #include "algorithms/memory.c"
 #include "algorithms/memory_simd.c"
 #include "algorithms/memory_simd_fma.c"
@@ -90,9 +90,13 @@ int main(int argc, char *argv[])
             convert_memory_simd_avx(img, width, height, channels, threads, gray);
             break;
         default:
-            printf("Unknown algorithm\n");
-            printf("algorithms are: 1-baseline, 2-memory, 3-simd, 4-fma, 5-sse, 6-avx\n");
-            exit(1);
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    gray[y * width + x] = 0.2126 * img[(y * width + x) * 3] + 0.7152 * img[(y * width + x) * 3 + 1] + 0.0722 * img[(y * width + x) * 3 + 2];
+                }
+            }
             break;
         }
 
