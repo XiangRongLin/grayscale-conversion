@@ -58,7 +58,7 @@ With
 
 ### SSE
 
-thread number|time in s|megapixel per s|
+|thread number|time in s|megapixel per s|
 ---|---|---|---|
 |12|0.030364|5088.0302|
 |32|0.030036|5143.7032|
