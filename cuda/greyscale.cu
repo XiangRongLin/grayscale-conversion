@@ -28,18 +28,15 @@ void ConvertToGrey(uchar3  *input, unsigned char *output, int rows, int columns)
 //runs on the host
 int main (){
     int rows,columns,channels,pixel_size;
-    unsigned char* Image = stbi_load("../images/15360x8640.jpg", &columns, &rows, &channels, 0);
+    unsigned char* Image = stbi_load("../images/PIA18164.jpg", &columns, &rows, &channels, 0);
     uchar3 *device_rgb;
     unsigned char *host_grey, *device_grey;
 
     pixel_size = columns * rows ;
 
-     printf("Image size: %d x %d\n", columns, rows);
-        printf("Pixel size: %d\n", pixel_size);
-        printf("Channels: %d\n", channels);
-
     host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
 
+  //  cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
     //Allocate device memory for the image
     cudaMalloc(&device_rgb, sizeof(uchar4) * pixel_size*3 );
     //allocate device memory for the grey image

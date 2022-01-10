@@ -6,7 +6,6 @@
 #include "../baseline/stb_image_write.h"
 #include <time.h>
 
-
 __global__
 void setPixelToGrayscale(unsigned char *image, int rows, int columns)
 {
@@ -23,23 +22,20 @@ void setPixelToGrayscale(unsigned char *image, int rows, int columns)
 }
 }
 
-
 int main()
 {
 	int width, height, channels;
-    unsigned char* image = stbi_load("../images/PIA03239.jpg", &width, &height, &channels, 0);
+    unsigned char* image = stbi_load("../images/PIA18164.jpg", &width, &height, &channels, 0);
     unsigned char* image_d;
     int N = width * height; 
     size_t size = N * sizeof(unsigned char) *3;
-	 int thread = 16;
+	 int thread = 32;
     const dim3 Block(thread, thread);
     const dim3 Grid((width + Block.x - 1) / Block.x, (height + Block.y - 1) / Block.y);
-    cudaMalloc(&image_d, size);
-    cudaMemcpy(image_d, image,  size, cudaMemcpyHostToDevice);
-	
+	  cudaMallocManaged(&image_d, size);
     setPixelToGrayscale<<<Grid,Block>>>(image_d,height,width);
-    cudaMemcpy(image, image_d, size, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
 	// stbi_write_png("../images/.grey.png", width, height, 1,image, width );
-	// stbi_write_jpg("../images/grey.jpg", width, height, 3, image, 100);
+//	 stbi_write_jpg("../images/grey.jpg", width, height, 3, image, 100);
     cudaFree(image_d);
 }
