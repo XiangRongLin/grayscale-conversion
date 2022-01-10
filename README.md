@@ -1,5 +1,24 @@
-# Benchmarks
+
+
+# Motivation
+a
+
+# GPU
+
+## Problemstellung
+
+## Lösungsansatz
+
+## Implementation
+
+## Review
+
+## Conclusion
+
+# CPU
+## Benchmarks
 ## Intel(R) Core(TM) i7-4710HQ CPU @ 2.50GHz
+
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
 |openmp_baseline|7680x4320|4|406|0.41|
@@ -79,3 +98,13 @@ final after fixing and improving avx
 |Name|image|thread number|MFLOPS/s|time in s|
 |---|---|---|---|---|
 |memory_simd_avx|27000x6000|8|16294|0.0501|
+
+## Problemstellung
+
+## Lösungsansatz
+
+## Implementation
+
+## Review
+
+## Conclusion
