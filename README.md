@@ -1,13 +1,12 @@
 
 
 # Motivation
-a
 
 # GPU
 
-## Problemstellung
+## Problem
 
-## Lösungsansatz
+## Solution attempt
 
 ## Implementation
 
@@ -16,16 +15,25 @@ a
 ## Conclusion
 
 # CPU
-## Benchmarks
-## Intel(R) Core(TM) i7-4710HQ CPU @ 2.50GHz
+## Problem
 
-|Name|image|thread number|MFLOPS/s|time in s|
+## Solution attempt
+
+## Implementation
+
+## Benchmarks
+With 
+- AMD Ryzen 5 3600 6-Core Processor 
+- gcc 11
+- compiled with O3
+
+### Ideal thread number
+
+|Name|image|thread number|time in s|
 |---|---|---|---|---|
-|openmp_baseline|7680x4320|4|406|0.41|
-|openmp_baseline|7680x4320|6|441|0.38|
-|openmp_baseline|7680x4320|8|492|0.34|
-|openmp_baseline|7680x4320|10|468|0.36|
-|openmp_baseline|7680x4320|16|433|0.39|
+|baseline|6|0.38|
+|baseline|12|0.418541|
+|baseline|10|0.36|
 
 Best performance with 8 threads which makes sense because it is a 4 core/8 logical processor CPU.
 
@@ -91,19 +99,13 @@ But now adding an even bigger image of the size 27000x6000 shows a 100% differen
 |memory_simd_sse|27000x6000|8|6817|0.1199|
 |memory_simd_avx|27000x6000|8|12813|0.0647|
 
----
 
-final after fixing and improving avx
-
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|memory_simd_avx|27000x6000|8|16294|0.0501|
-
-## Problemstellung
-
-## Lösungsansatz
-
-## Implementation
+### CPU comparison
+With 27000x6000 image
+|CPU|algorithm|thread number|time in s|
+|---|---|---|---|
+|Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz|simd_sse|24|0.028947|
+|Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz|simd_avx|24|0.027712|
 
 ## Review
 
