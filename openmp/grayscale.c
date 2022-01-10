@@ -10,42 +10,51 @@
 #include "../baseline/stb_image_write.h"
 
 // Comment in whichever algorithm should be used and comment out all the other ones.
-// #include "algorithms/baseline.c"
-// #include "algorithms/memory.c"
-// #include "algorithms/memory_simd.c"
-// #include "algorithms/memory_simd_fma.c"
-// #include "algorithms/memory_simd_fma2.c"
-// #include "algorithms/memory_simd_avx.c"
+#include "algorithms/baseline.c"
+#include "algorithms/memory.c"
+#include "algorithms/memory_simd.c"
+#include "algorithms/memory_simd_fma.c"
 #include "algorithms/memory_simd_sse.c"
-// #include "algorithms/memory_simd_256_bit.c"
-// #include "algorithms/memory_simd_fma_512_bit.c"
+#include "algorithms/memory_simd_avx.c"
 
-#define THREADS 8
-
-int main()
+int main(int argc, char *argv[])
 {
-    int runs = 1;
+    int runs;
+    int threads;
+    int write_image;
+    int algo;
+    if (argc == 5)
+    {
+        runs = atoi(argv[1]);
+        threads = atoi(argv[2]);
+        write_image = atoi(argv[3]);
+        algo = atoi(argv[4]);
+    }
+    else
+    {
+        printf("cli arguments: runs threads write_image algorithm_name\n");
+        printf("algorithms are: 1-baseline, 2-memory, 3-simd, 4-fma, 5-sse, 6-avx\n");
+        exit(1);
+    }
 
     // Read color JPG into byte array "img"
     // Array contains "width" x "height" pixels each consisting of "channels" colors/bytes
     int width, height, channels;
-    // unsigned char *img = stbi_load("../images/small.jpg", &width, &height, &channels, 0);
     //https://photojournal.jpl.nasa.gov/catalog/?IDNumber=PIA03239
-    // unsigned char *img = stbi_load("../images/27000x6000.jpg", &width, &height, &channels, 0);
-    unsigned char *img = stbi_load("../images/15360x8640.jpg", &width, &height, &channels, 0);
-    // unsigned char *img = stbi_load("../images/7680x4320.jpg", &width, &height, &channels, 0);
+    unsigned char *img = stbi_load("../images/27000x6000.jpg", &width, &height, &channels, 0);
     if (img == NULL)
     {
         printf("Err: loading image\n");
         exit(1);
     }
 
-    printf("w: %d ; h: %d ; c: %d\n", width, height, channels);
+    printf("w: %d ; h: %d ; c: %d ;\n", width, height, channels, runs, threads);
+    printf("algo: %d; runs: %d ; threads: %d\n", algo, runs, threads);
 
     // Allocate target array for grayscale image
     unsigned char *gray = malloc(width * height);
-    double mflops_sum = 0.0;
     double time_sum = 0.0;
+    omp_set_num_threads(threads);
 
     for (int i = 0; i < runs; i++)
     {
@@ -54,8 +63,33 @@ int main()
         gettimeofday(&start, 0);
 
         // convert
-        omp_set_num_threads(THREADS);
-        convert(img, width, height, channels, THREADS, gray);
+        switch (algo)
+        {
+        case 1:
+            convert_baseline(img, width, height, channels, threads, gray);
+            break;
+
+        case 2:
+            convert_memory(img, width, height, channels, threads, gray);
+            break;
+        case 3:
+            convert_memory_simd(img, width, height, channels, threads, gray);
+            break;
+        case 4:
+            convert_memory_simd_fma(img, width, height, channels, threads, gray);
+            break;
+        case 5:
+            convert_memory_simd_sse(img, width, height, channels, threads, gray);
+            break;
+        case 6:
+            convert_memory_simd_avx(img, width, height, channels, threads, gray);
+            break;
+        default:
+            printf("Unknown algorithm\n");
+            printf("algorithms are: 1-baseline, 2-memory, 3-simd, 4-fma, 5-sse, 6-avx\n");
+            exit(1);
+            break;
+        }
 
         // end time tracking
         struct timeval end;
@@ -63,21 +97,14 @@ int main()
         long lsec = end.tv_sec - start.tv_sec;
         long lusec = end.tv_usec - start.tv_usec;
         double sec = (lsec + lusec / 1000000.0);
-        printf("%8.6f seconds\n", sec);
-
-        // FLOP calculation
-        double flop = width * height * (3 + 2);
-        printf("%8.2f MFLOP\n", flop / 1000000.0);
-
-        // Print FLOP/s
-        double mflops = flop / 1000000.0 / sec;
-        mflops_sum += mflops;
         time_sum += sec;
-        printf("%8.2f MFLOP/s\n", mflops);
+        printf("%8.6f seconds\n", sec);
     }
+    printf("average: %8.6f \n", time_sum / runs);
 
-    printf("average: %8.2f MFLOP/s - %8.6f seconds\n", mflops_sum / runs, time_sum / runs);
-
-    // printf("Writing image\n");
-    // stbi_write_jpg("grayscale.jpg", width, height, 1, gray, 95);
+    if (write_image == 1)
+    {
+        printf("Writing image\n");
+        stbi_write_jpg("grayscale.jpg", width, height, 1, gray, 95);
+    }
 }

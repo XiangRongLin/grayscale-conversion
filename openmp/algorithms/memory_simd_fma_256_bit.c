@@ -1,7 +1,7 @@
 #include <immintrin.h>
 #include <stdio.h>
 
-void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert_simd_fma_256_bit(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     // 256 bit registers, 32 bit floats => 8
     int floats_per_operation = 8;

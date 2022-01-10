@@ -1,6 +1,6 @@
 #include <immintrin.h>
 
-void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert_memory_simd(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     int pixel_per_thread = (width * height) / threads;
 #pragma omp parallel for
@@ -27,6 +27,5 @@ void convert(unsigned char *img, int width, int height, int channels, int thread
 
             result[i] = gray_pixel_values[0] * gray_pixel_values[1] * gray_pixel_values[2];
         }
-        free(gray_pixel_values);
     }
 }

@@ -16,8 +16,13 @@
 
 # CPU
 ## Problem
+- naive solution is single threaded
+- processors can calculate 128/256 bit at once, but only part of it is used in a single iteration
+- data is in rgbrgbrgbrgb format, but rrrrggggbbbb is needed
+- memory is not aligned
 
 ## Solution attempt
+
 
 ## Implementation
 
@@ -26,26 +31,20 @@ With
 - AMD Ryzen 5 3600 6-Core Processor 
 - gcc 11
 - compiled with O3
+- 20 runs each
 
-### Ideal thread number
+### Thread numbers
 
 |Name|image|thread number|time in s|
 |---|---|---|---|---|
-|baseline|6|0.38|
-|baseline|12|0.418541|
-|baseline|10|0.36|
+|memory|27000x6000|12|0.034168|
+|memory|27000x6000|24|0.032991|
+|memory|27000x6000|36|0.032452|
+|memory|27000x6000|48|0.031722|
+|memory|27000x6000|128|0.030857|
+|memory|27000x6000|256|0.032534|
 
-Best performance with 8 threads which makes sense because it is a 4 core/8 logical processor CPU.
-
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|openmp_baseline|15360x8640|6|291|2.28|
-|openmp_baseline|15360x8640|8|317|2.09|
-|openmp_baseline|15360x8640|10|302|2.21|
-
-With a bigger image the best performance is still with 8 threads, but roughly 35% worse.
-
----
+### Fused Multiply add
 
 We can optimize the memory access by having each thread only calculate the gray value for a consecutive area.
 |Name|image|thread number|MFLOPS/s|time in s|

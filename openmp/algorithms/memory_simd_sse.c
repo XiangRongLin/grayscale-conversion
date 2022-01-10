@@ -72,7 +72,7 @@ static __attribute__((always_inline)) inline __m128i Rgb2Yx8(__m128i r7_r6_r5_r4
     return y7_y6_y5_y4_y3_y2_y1_y0;
 }
 
-void convert(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
+void convert_memory_simd_sse(unsigned char *img, int width, int height, int channels, int threads, unsigned char *result)
 {
     // 256 bit registers, 32 bit floats => 8
     int floats_per_operation = 8;
