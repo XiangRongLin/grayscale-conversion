@@ -1,4 +1,4 @@
-
+Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Rong Lin](https://github.com/XiangRongLin) for the lecture "High Performance Computing" at the "Hochschule für Technik Stuttgart"
 
 # Motivation
 
@@ -22,8 +22,33 @@
 - memory is not aligned
 
 ## Solution attempt
-### Multi Threaded
-First
+### Multithreaded
+The easiest place to optimize it, is utilizing all cores of a CPU and thus convert it to a multithreaded application.
+This is done with OpenMP by adding the pragma `#pragma omp parallel for collapse(2)` (see [openmp_baseline.c](cpu/algorithms/openmp_baseline.c))).
+`omp parallel for` parallelizes the `for` loop with `collapse(2)` collapsing both loops and thus parallelizing both.
+This gives a more than 6 times performance boost.
+
+In the next step the memory access can optimized.
+Currently each thread calculates the grey value for a random pixel, depending on how it is scheduled by openMP.
+For this it needs to load 3 unsigned char, so 24 bytes from memory.
+But a CPU preloads more data into the cache anticipating that it will be needed.
+This behavior can be used to by having each thread operating on a continuous section, thus using the data that is already in the CPU Cache (see [memory.c](cpu/algorithms/memory.c)).
+
+### SIMD FMA
+The next place to optimize is utilizing the full register of the CPU by using Single Instruction Multiple Data (SIMD).
+For example we could add 16 8-bit integers at once in a 128 bit register instead of only a single one, thus theoretically creating a 16 time speedup.
+Additionally one can use a dedicated arithmetic logic unit that multiplies two numbers and add it to an accumulator, knows as MAC-unit (multiplier-accumulator).
+This takes the form of "fused multiply add" (FMA), which additionally only rounds at the end, thus combining two operations into one.
+
+The data being in the form of rgbrgbrgbrgb appears for the first time.
+For FMA a whole register need to be filled with only red, green or blue values, meaning we want the data in rrrrggggbbbb format.
+This problem is ignored for now, by just setting the register with the appropriate values, which comes with its own performance problems, because with the data being spread out like this, multiple reads may be necessary.
+```
+r_vector = _mm_set_ps(img[(i * channels)], img[(i + 1) * channels], img[(i + 2) * channels], img[(i + 3) * channels]);
+g_vector = _mm_set_ps(img[(i * channels) + 1], img[(i + 1) * channels + 1], img[(i + 2) * channels + 1], img[(i + 3) * channels + 1]);
+b_vector = _mm_set_ps(img[(i * channels) + 2], img[(i + 1) * channels + 2], img[(i + 2) * channels + 2], img[(i + 3) * channels + 2]);
+
+```
 
 ## Implementation
 
@@ -38,28 +63,40 @@ With
 ### Baseline
 |time in s|megapixel per s|
 |---|---|
-|0.035498|4352.2054|
+|2.739997|56.3852|
 
-### Memory
+### openmp baseline
 
 |thread number|time in s|megapixel per s|
 |---|---|---|
-|2.739997| 56.3852|
+|12|0.411790|375.1795|
+|32|0.414154|373.0381|
+|64|0.414555|372.6776|
+|128|0.430195|359.1287|
+
+### memory
+
+|thread number|time in s|megapixel per s|
+|---|---|---|
+|32|0.032053|4820.0608|
+|64|0.031559|4895.3717|
+|128|0.030711|5030.6157|
+|256|0.032755|4716.6270|
 
 ### FMA
 
 |thread number|time in s|megapixel per s|
 |---|---|---|
-12|0.035387|4365.8509|
-32|0.035855|4308.9137|
-64|0.035242|4383.8510|
-128|0.034176|4520.5836|
-256|0.035138|4396.8387|
+|12|0.035387|4365.8509|
+|32|0.035855|4308.9137|
+|64|0.035242|4383.8510|
+|128|0.034176|4520.5836|
+|256|0.035138|4396.8387|
 
 ### SSE
 
 |thread number|time in s|megapixel per s|
----|---|---|---|
+|---|---|---|
 |12|0.030364|5088.0302|
 |32|0.030036|5143.7032|
 |64|0.030248|5107.6352|
@@ -85,5 +122,12 @@ With
 |Intel Core i9-9880H (8 Core)|simd_avx|24|0.027712||
 
 ## Review
+### Memory Bottleneck
+27000*6000 = 486.000.000 (pixel)
+486.000.000 * 3 (bytes) = 463,49 (mb)
+on average 30ms for 463,49mb of image => 15459mb/s data transfer => 15gb/s data transfer
+memory bandwidth of CPU is 48gb/s in dual channel mode. https://en.wikichip.org/wiki/amd/ryzen_5/3600
+But with the relativly small 
+=> probably no
 
 ## Conclusion

@@ -17,7 +17,6 @@
 
 #include "algorithms/openmp_baseline.c"
 #include "algorithms/memory.c"
-#include "algorithms/memory_simd.c"
 #include "algorithms/memory_simd_fma.c"
 #include "algorithms/memory_simd_sse.c"
 #include "algorithms/memory_simd_avx.c"
@@ -38,7 +37,7 @@ int main(int argc, char *argv[])
     else
     {
         printf("cli arguments: runs threads write_image algorithm_name\n");
-        printf("algorithms are: 1-baseline, 2-memory, 3-simd, 4-fma, 5-sse, 6-avx\n");
+        printf("algorithms are: 1-baseline, 2-memory, 3-fma, 4-sse, 5-avx\n");
         exit(1);
     }
 
@@ -73,25 +72,21 @@ int main(int argc, char *argv[])
         case 1:
             convert_baseline(img, width, height, channels, threads, gray);
             break;
-
-        case 2:
+        case 2: 
             convert_memory(img, width, height, channels, threads, gray);
             break;
         case 3:
-            convert_memory_simd(img, width, height, channels, threads, gray);
-            break;
-        case 4:
             convert_memory_simd_fma(img, width, height, channels, threads, gray);
             break;
-        case 5:
+        case 4:
             convert_memory_simd_sse(img, width, height, channels, threads, gray);
             break;
-        case 6:
+        case 5:
             convert_memory_simd_avx(img, width, height, channels, threads, gray);
             break;
         default:
             printf("Unknown algorithm\n");
-            printf("algorithms are: 1-baseline, 2-memory, 3-simd, 4-fma, 5-sse, 6-avx\n");
+            printf("algorithms are: 1-baseline, 2-memory, 3-fma, 4-sse, 5-avx\n");
             exit(1);
             break;
         }

@@ -50,7 +50,6 @@ void convert_memory_simd_fma(unsigned char *img, int width, int height, int chan
             gray_vector_int = _mm_packus_epi16(gray_vector_int, gray_vector_int);
 
             *(int *)(&result[i]) = _mm_cvtsi128_si32(gray_vector_int);
-            printf("");
         }
     }
 
