@@ -9,7 +9,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../baseline/stb_image_write.h"
 
-// Comment in whichever algorithm should be used and comment out all the other ones.
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "algorithms/baseline.c"
 #include "algorithms/memory.c"
 #include "algorithms/memory_simd.c"
@@ -99,8 +104,12 @@ int main(int argc, char *argv[])
         double sec = (lsec + lusec / 1000000.0);
         time_sum += sec;
         printf("%8.6f seconds\n", sec);
+
+        // add a bit of a pause for the CPU between runs
+        sleep(0.5);
     }
-    printf("average: %8.6f \n", time_sum / runs);
+    printf("average: %8.6f second, %8.4f mega pixel per second\nFor Markdown: \n", time_sum / runs, (width * height) / (time_sum * 1024 * 1024 / runs));
+    printf("|%8.6f|%8.4f|\n", time_sum / runs, (width * height) / (time_sum * 1024 * 1024 / runs));
 
     if (write_image == 1)
     {

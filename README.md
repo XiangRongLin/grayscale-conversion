@@ -30,81 +30,57 @@
 With 
 - AMD Ryzen 5 3600 6-Core Processor 
 - gcc 11
-- compiled with O3
+- compiled `gcc -fopenmp grayscale.c -lm -march=native -O`
 - 20 runs each
+- 27000x6000 pixel image https://photojournal.jpl.nasa.gov/catalog/?IDNumber=PIA03239
 
-### Thread numbers
+### Memory
 
-|Name|image|thread number|time in s|
-|---|---|---|---|---|
-|memory|27000x6000|12|0.034168|
-|memory|27000x6000|24|0.032991|
-|memory|27000x6000|36|0.032452|
-|memory|27000x6000|48|0.031722|
-|memory|27000x6000|128|0.030857|
-|memory|27000x6000|256|0.032534|
+|thread number|time in s|megapixel per s|
+|---|---|---|
+|12|0.035498|4352.2054|
+|32|0.032019|4825.1565|
+|64|0.031561|4895.1701|
+|128|0.030775|5020.2111|
+|256|0.032250|4790.6095|
 
-### Fused Multiply add
+### FMA
 
-We can optimize the memory access by having each thread only calculate the gray value for a consecutive area.
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|convert_openmp_memory|7680x4320|8|3443|0.0633|
-|convert_openmp_memory|15360x8640|8|3713|0.2478|
+|thread number|time in s|megapixel per s|
+|---|---|---|
+12|0.035387|4365.8509|
+32|0.035855|4308.9137|
+64|0.035242|4383.8510|
+128|0.034176|4520.5836|
+256|0.035138|4396.8387|
 
-This gives us a 650% improvement compared to before for the small image and bringing the big image to the same performance
+### SSE
 
----
+thread number|time in s|megapixel per s|
+---|---|---|---|
+|12|0.030364|5088.0302|
+|32|0.030036|5143.7032|
+|64|0.030248|5107.6352|
+|128|0.030838|5009.9306|
+|256|0.032062|4818.7077|
 
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|convert_openmp_memory_simd_fma|7680x4320|8|1710|0.0975|
-|convert_openmp_memory_simd_fma|15360x8640|8|1790|0.3711|
+### AVX
 
-While keeping the previous adjustments as is but using fused multiply add (FMA) gives a 35% regression in performance.
-This could be due to the overhead of the preparation for FMA.
-- The single array with the rgb values was split into 3 arrays each only with one of the 3 values.
-- Each iteration needs to access values from all 3 arrays. Depending on cache size not all values can be held in cache and need to be reloaded on the next iteration making the memory access continious useless.
-- The pixel is saved as 8-bit `unsigned char`, which needs to be converted to a 32-bit `float` for the calculation and then back again to 8-bit `unsigned char` for writing the image.
-
----
-
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|convert_openmp_memory_simd_fma2|7680x4320|8|2204|0.0754|
-|convert_openmp_memory_simd_fma2|15360x8640|8|2353|0.2821|
-
-This can be improved by 30% by not splitting up the img into 3 array beforehand, but doing it at the place where it's needed.
-
----
-TODO updated to gcc 11, redo previous benchmarks
-
-With the next change we can calculate 8 numbers at once instead of only 4 giving us a xx% improvement. But it is still worse than just using memory alignment without SIMD.
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|convert_openmp_memory_simd_fma_256_bit|7680x4320|8|2987|0.0556|
-|convert_openmp_memory_simd_fma_256_bit|15360x8640|8|3209|0.2068|
-
-----
-
-TODO using `-O3` now redo benchmarks
-
-Doing the benchmarks with the existing images shows little improvment between using SSE (128 bit vectors) and AVX (256 bit vectors).
-But now adding an even bigger image of the size 27000x6000 shows a 100% difference between the 2.
-
-|Name|image|thread number|MFLOPS/s|time in s|
-|---|---|---|---|---|
-|memory|27000x6000|8|9833|0.0827|
-|memory_simd_sse|27000x6000|8|6817|0.1199|
-|memory_simd_avx|27000x6000|8|12813|0.0647|
-
+|thread number|time in s|megapixel per s|
+|---|---|---|
+|12|0.030029|5144.9279|
+|32|0.029775|5188.7483|
+|64|0.030188|5117.7360|
+|128|0.030685|5034.9111|
+|256|0.032302|4782.7716|
 
 ### CPU comparison
-With 27000x6000 image
-|CPU|algorithm|thread number|time in s|
-|---|---|---|---|
-|Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz|simd_sse|24|0.028947|
-|Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz|simd_avx|24|0.027712|
+|CPU|algorithm|thread number|time in s|megapixel per s|
+|---|---|---|---|---|
+|AMD Ryzen 5 3600 (6 Core)|simd_sse|32|0.030036|5143.7032|
+|AMD Ryzen 5 3600 (6 Core)|simd_avx|32|0.029775|5188.7483|
+|Intel Core i9-9880H (8 Core)|simd_sse|24|0.028947||
+|Intel Core i9-9880H (8 Core)|simd_avx|24|0.027712||
 
 ## Review
 
