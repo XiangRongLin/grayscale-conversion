@@ -35,6 +35,8 @@ But a CPU preloads more data into the cache anticipating that it will be needed.
 This behavior can be used to by having each thread operating on a continuous section, thus using the data that is already in the CPU Cache (see [memory.c](cpu/algorithms/memory.c)).
 
 ### SIMD FMA
+All references to intrinsic functions can be looked up here: https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
+
 The next place to optimize is utilizing the full register of the CPU by using Single Instruction Multiple Data (SIMD).
 For example we could add 16 8-bit integers at once in a 128 bit register instead of only a single one, thus theoretically creating a 16 time speedup.
 Additionally one can use a dedicated arithmetic logic unit that multiplies two numbers and add it to an accumulator, knows as MAC-unit (multiplier-accumulator).
@@ -43,14 +45,27 @@ This takes the form of "fused multiply add" (FMA), which additionally only round
 The data being in the form of rgbrgbrgbrgb appears for the first time.
 For FMA a whole register need to be filled with only red, green or blue values, meaning we want the data in rrrrggggbbbb format.
 This problem is ignored for now, by just setting the register with the appropriate values, which comes with its own performance problems, because with the data being spread out like this, multiple reads may be necessary.
-```
+```C
 r_vector = _mm_set_ps(img[(i * channels)], img[(i + 1) * channels], img[(i + 2) * channels], img[(i + 3) * channels]);
 g_vector = _mm_set_ps(img[(i * channels) + 1], img[(i + 1) * channels + 1], img[(i + 2) * channels + 1], img[(i + 3) * channels + 1]);
 b_vector = _mm_set_ps(img[(i * channels) + 2], img[(i + 1) * channels + 2], img[(i + 2) * channels + 2], img[(i + 3) * channels + 2]);
-
 ```
 
-## Implementation
+With the data in the correct format the multiplication is very simple
+```C
+gray_vector = _mm_setzero_ps();
+gray_vector = _mm_fmadd_ps(r_vector, r_factor, gray_vector);
+gray_vector = _mm_fmadd_ps(g_vector, g_factor, gray_vector);
+gray_vector = _mm_fmadd_ps(b_vector, b_factor, gray_vector);
+```
+
+Full code see [memory_simd_fma.c](cpu/algorithms/memory_simd_fma.c)
+
+A problem with FMA is, that the basic FMA instruction set only supports working with 32-bit and 64-bit floating point numbers.
+This means that with a 128-bit register a maximum of 4 pixel can be calculated at once.
+
+### SIMD SSE
+
 
 ## Benchmarks
 With 
