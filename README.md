@@ -65,6 +65,44 @@ A problem with FMA is, that the basic FMA instruction set only supports working 
 This means that with a 128-bit register a maximum of 4 pixel can be calculated at once.
 
 ### SIMD SSE
+This implementation if completly copied from a Stackoverflow post by [Rotem](https://stackoverflow.com/users/4926757/rotem): https://stackoverflow.com/a/57844027/13516981
+Only modification made was making it compatible with pure C, since it was using C++ features (see [memory_simd_sse.c](cpu/algorithms/memory_simd_sse.c))
+
+It has 2 major optimization areas.
+But most importingly for me it also showed me how to work with the bit modification function in a structured manner by naming the variables according to the pixel bytes it contains.
+
+First it utilizes shuffle (`_mm_shuffle_epi8`), concat (`_mm_alignr_epi8`) and shift (`_mm_slli_si128`) functions to solve the problem of rearranging the bytes from rgbrgbrgbrgb to rrrrggggbbbb.
+For example one can group the bytes according to their color like this.
+```C
+const __m128i shuffle_mask = _mm_set_epi8(9, 6, 3, 0, 11, 8, 5, 2, 10, 7, 4, 1, 9, 6, 3, 0);
+
+__m128i r3_r2_r1_r0_b3_b2_b1_b0_g3_g2_g1_g0_r3_r2_r1_r0 = _mm_shuffle_epi8(r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0, shuffle_mask);
+```
+Or like this
+```C
+// The 12 is the amount of bytes to shift the result
+__m128i b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4 = _mm_alignr_epi8(b7_g7_r7_b6_g6_r6_b5_g5, r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0, 12);
+```
+If the bytes are not at the start or end in order to concatenate them they are shifted like this
+```C
+// 8 bytes to the left
+__m128i g3_g2_g1_g0_r3_r2_r1_r0_zz_zz_zz_zz_zz_zz_zz_zz = _mm_slli_si128(r3_r2_r1_r0_b3_b2_b1_b0_g3_g2_g1_g0_r3_r2_r1_r0, 8);
+// 4 bytes to the right
+__m128i zz_zz_zz_zz_r7_r6_r5_r4_b7_b6_b5_b4_g7_g6_g5_g4 = _mm_srli_si128(r7_r6_r5_r4_b7_b6_b5_b4_g7_g6_g5_g4_r7_r6_r5_r4, 4);
+```
+
+Additionally it sacrifices some accuracy by calculating the gray value with 16-bit integers instead of 32-bit floats
+
+### SIMD AVX
+With this knowlegde the next step is using the AVX instruction set, which operates on 256-bit registers unlike 128-bit in SSE.
+This in theory allowes one to process twice the amount of pixels at once.
+Unfortunatly many AVX functions behave slightly different compared to their SSE counterpart in the form of only operating within 128-bit lanes instead of across the whole 256-bit register.
+This means that it is not possible to shuffle a byte from the lower lane to the upper lane with `_mm256_shuffle_epi8`.
+So in a register with `gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0`, where the lane split is between g5 and r5, it is not possible to group all red values because r6, r7, r8 and r9 are in the upper lane, whereas the other values are in the lower lane.
+
+Because of this, for AVX a different set of functions is used in order to group the bytes of each color.
+`_mm256_shuffle_epi8` is still used, knowing the restriction, in order to group the bytes in each lane in preparation for the other function.
+
 
 
 ## Benchmarks
