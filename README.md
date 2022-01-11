@@ -138,11 +138,17 @@ With
 
 ## Review
 ### Memory Bottleneck
-27000*6000 = 486.000.000 (pixel)
-486.000.000 * 3 (bytes) = 463,49 (mb)
-on average 30ms for 463,49mb of image => 15459mb/s data transfer => 15gb/s data transfer
-memory bandwidth of CPU is 48gb/s in dual channel mode. https://en.wikichip.org/wiki/amd/ryzen_5/3600
+AVX
+27000*6000 = 162000000 (pixel)
+pixel per iteration = 32
+iterations = 162000000 / 32 = 5062500
+bytes read per iteration = 128 
+bytes read = 128 * 5062500 = 648000000
+bytes written = 162000000
+bytes tranferred = 648000000 + 162000000 = 810000000
+810000000 bytes = 772.4761mb
+on average 30ms for 772.4761mb of image => 25749mb/s data transfer => 25,14gb/s data transfer
+memory bandwidth of CPU is 48gb/s in dual channel mode, 24gb in single channel. https://en.wikichip.org/wiki/amd/ryzen_5/3600
 But with the relativly small 
-=> probably no
 
 ## Conclusion
