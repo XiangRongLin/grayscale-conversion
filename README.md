@@ -133,8 +133,8 @@ With
 |---|---|---|---|---|
 |AMD Ryzen 5 3600 (6 Core)|simd_sse|32|0.030036|5143.7032|
 |AMD Ryzen 5 3600 (6 Core)|simd_avx|32|0.029775|5188.7483|
-|Intel Core i9-9880H (8 Core)|simd_sse|24|0.028947||
-|Intel Core i9-9880H (8 Core)|simd_avx|24|0.027712||
+|Intel Core i9-9880H (8 Core)|simd_sse|64|0.027484|5621.3304|
+|Intel Core i9-9880H (8 Core)|simd_avx|128|0.027279|5663.5644|
 
 ## Review
 ### Memory Bottleneck
