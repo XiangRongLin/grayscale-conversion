@@ -4,6 +4,10 @@
 #include <math.h>
 #include <omp.h>
 
+#define STBI_MALLOC(sz)           _mm_malloc(sz,32)
+#define STBI_REALLOC(p,newsz)     realloc(p,newsz)
+#define STBI_FREE(p)              _mm_free(p)
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "../baseline/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -56,7 +60,7 @@ int main(int argc, char *argv[])
     printf("algo: %d; runs: %d ; threads: %d\n", algo, runs, threads);
 
     // Allocate target array for grayscale image
-    unsigned char *gray = malloc(width * height);
+    unsigned char *gray  = aligned_alloc(width * height, 32);
     double time_sum = 0.0;
     omp_set_num_threads(threads);
 

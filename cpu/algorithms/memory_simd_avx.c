@@ -12,10 +12,13 @@ static __attribute__((always_inline)) inline void GatherRGBx8_avx(
     __m256i *gF_gE_gD_gC_gB_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0,
     __m256i *bF_bE_bD_bC_bB_bA_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0)
 {
+    // shuffle mask to group both lanes and order the groups as described
     const __m256i brg_gbr_shuffle_mask =
         _mm256_set_epi8(13, 10, 7, 4, 1, 14, 11, 8, 5, 2, 15, 12, 9, 6, 3, 0, /**/ 13, 10, 7, 4, 1, 14, 11, 8, 5, 2, 15, 12, 9, 6, 3, 0);
     const __m256i grb_shuffle_mask =
         _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /**/ 14, 11, 8, 5, 2, 13, 10, 7, 4, 1, 15, 12, 9, 6, 3, 0);
+
+    // Used for 
     const __m256i low_blend_mask =
         _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /**/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 128, 128, 128, 128, 128);
     const __m256i middle_blend_mask =
@@ -161,9 +164,9 @@ void convert_memory_simd_avx(unsigned char *img, int width, int height, int chan
         for (int i = pixel_per_thread_aligned * thread; i < end; i += pixel_per_iteration)
         {
             const int pixel_index = i * channels;
-            __m256i gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0 = _mm256_loadu_si256((__m256i *)&img[pixel_index]);
+            __m256i gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0 = _mm256_load_si256((__m256i *)&img[pixel_index]);
             // Load the next 32 bytes, of which on the first 16 are used
-            __m256i bF_gF_rF_bE_gE_rE_bD_gD_rD_bC_gC_rC_bB_gB_rB_bA = _mm256_loadu_si256((__m256i *)&img[pixel_index + 32]);
+            __m256i bF_gF_rF_bE_gE_rE_bD_gD_rD_bC_gC_rC_bB_gB_rB_bA = _mm256_load_si256((__m256i *)&img[pixel_index + 32]);
 
             //Separate RGB, and put together R elements, G elements and B elements (together in same XMM register).
             //Result is also unpacked from uint8 to uint16 elements.
@@ -180,6 +183,7 @@ void convert_memory_simd_avx(unsigned char *img, int width, int height, int chan
 
             //Calculate another 16 elements, because the store operation _mm256_storeu_si256 can store 32*8=256 bits at once
             // skip 16*3=48 bytes
+            // Because of this, can't use _mm256_load_si256 where address needs to be 32-byte aligned
             gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0 = _mm256_loadu_si256((__m256i *)&img[pixel_index + 48]);
             // skip 16*3+32=80 bytes
             bF_gF_rF_bE_gE_rE_bD_gD_rD_bC_gC_rC_bB_gB_rB_bA = _mm256_loadu_si256((__m256i *)&img[pixel_index + 80]);
@@ -200,7 +204,7 @@ void convert_memory_simd_avx(unsigned char *img, int width, int height, int chan
                 yF_yE_yD_yC_y7_y6_y5_y4_yB_yA_y9_y8_y3_y2_y1_y0,
                 _MM_SHUFFLE(3, 1, 2, 0));
 
-            _mm256_storeu_si256((__m256i *)&result[i], yF_yE_yD_yC_yB_yA_y9_y8_y7_y6_y5_y4_y3_y2_y1_y0);
+            _mm256_store_si256((__m256i *)&result[i], yF_yE_yD_yC_yB_yA_y9_y8_y7_y6_y5_y4_y3_y2_y1_y0);
         }
     }
 
