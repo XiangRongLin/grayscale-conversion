@@ -27,7 +27,8 @@ Threads are grouped into Blocks
 
 Grids:
 
-Blocks are grouped into Grid
+Blocks are grouped into a Grid
+
 Each Kernel launch creates one single Grid
 
 https://developer-blogs.nvidia.com/wp-content/uploads/2020/06/kernel-execution-on-gpu-1-625x438.png
