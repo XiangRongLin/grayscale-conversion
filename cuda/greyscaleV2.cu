@@ -27,18 +27,24 @@ void setPixelToGrayscale(unsigned char *image, int rows, int columns)
 int main()
 {
 	int width, height, channels;
-    unsigned char* image = stbi_load("../images/PIA18164.jpg", &width, &height, &channels, 0);
+    unsigned char* image = stbi_load("../images/PIA03239.jpg", &width, &height, &channels, 0);
     unsigned char* image_d;
     int N = width * height; 
     size_t size = N * sizeof(unsigned char) *3;
 	 int thread = 16;
     const dim3 Block(thread, thread);
     const dim3 Grid((width + Block.x - 1) / Block.x, (height + Block.y - 1) / Block.y);
+    cudaFree(0);
+    clock_t start, end;
     cudaMalloc(&image_d, size);
+    start = clock();
     cudaMemcpy(image_d, image,  size, cudaMemcpyHostToDevice);
     setPixelToGrayscale<<<Grid,Block>>>(image_d,height,width);
-    cudaDeviceSynchronize();
     cudaMemcpy(image, image_d, size, cudaMemcpyDeviceToHost);
+    end = clock();
+    double time =(double)(end-start)/CLOCKS_PER_SEC;
+     printf("gpu execution and copy time is %.30lf\n", time);
+    
 	// stbi_write_png("../images/.grey.png", width, height, 1,image, width );
     //	stbi_write_jpg("../images/grey.jpg", width, height, 3, image, 100);
     cudaFree(image_d);

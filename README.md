@@ -126,7 +126,7 @@ Generaly pinned memory is recommended if we want to overlap copy and comput
 ![pinnendMemory](images/pagableDataTransfer.png)
 https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg
 
-Instead of malloc() we could use cudaMallocHost(). 
+Instead of malloc() we could use cudaMallocHost(). This will allocate the data in the Pinned Memory. I didnt find a way to direclty allocate the Image with the stb_image.h functionality. But luckily CUDA offers cudaHostRegister which will pinn memory that is already allocated.
 
 
 # CPU

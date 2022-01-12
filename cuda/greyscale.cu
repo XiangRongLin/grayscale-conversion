@@ -32,20 +32,28 @@ int main (){
     unsigned char* Image = stbi_load("../images/PIA03239.jpg", &columns, &rows, &channels, 0);
     uchar3 *device_rgb;
     unsigned char *host_grey, *device_grey;
+    cudaError_t result;
 
     pixel_size = columns * rows ;
 
-    host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
-    
-    //for profiling purposes
+   // host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
     cudaFree(0);
-    //cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
+    result =  cudaHostRegister(Image, pixel_size *3, cudaHostRegisterPortable);	
+    //for profiling purposes
+
+    cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
     //Allocate device memory for the image
-    cudaMalloc(&device_rgb, sizeof(uchar4) * pixel_size*3 );
+   cudaMalloc(&device_rgb, sizeof(uchar4) * pixel_size*3 );
     //allocate device memory for the grey image
 	cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
     //sets device memory to a value.
 	cudaMemset(device_grey, 0, sizeof(unsigned char) * pixel_size);
+
+    if(result != cudaSuccess) {
+    printf("Error: cudaHostRegister returned %s (code %d)\n", cudaGetErrorString(result), result);
+    printf("Error in cudaHostRegister: %s.\n", cudaGetErrorString(result));
+    return -1;
+    }
 
     int thread = 16;
     const dim3 Block(thread, thread);
@@ -72,10 +80,10 @@ int main (){
     
     // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, host_grey, 100);
 
-    // stbi_write_png("../images/.grey.png", columns, rows, 3,host_grey, columns );
+  //   stbi_write_png("../images/.grey.png", columns, rows,1,host_grey, columns );
 
     // free the allocated memory on the host and the device
-    free(host_grey);
+    cudaFree(host_grey);
     cudaFree(device_rgb);
     cudaFree(device_grey);
 
