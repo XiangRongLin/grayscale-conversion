@@ -18,7 +18,6 @@ static __attribute__((always_inline)) inline void GatherRGBx8_avx(
     const __m256i grb_shuffle_mask =
         _mm256_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /**/ 14, 11, 8, 5, 2, 13, 10, 7, 4, 1, 15, 12, 9, 6, 3, 0);
 
-    // Used for 
     const __m256i low_blend_mask =
         _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /**/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 128, 128, 128, 128, 128);
     const __m256i middle_blend_mask =
@@ -33,6 +32,7 @@ static __attribute__((always_inline)) inline void GatherRGBx8_avx(
             gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0,
             brg_gbr_shuffle_mask);
 
+    //swap lanes
     __m256i g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0_b9_b8_b7_b6_b5_rA_r9_r8_r7_r6_gA_g9_g8_g7_g6_g5 =
         _mm256_permute2x128_si256(
             b9_b8_b7_b6_b5_rA_r9_r8_r7_r6_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0,
@@ -64,7 +64,7 @@ static __attribute__((always_inline)) inline void GatherRGBx8_avx(
             middle_blend_mask);
 
     __m256i b_8bit = _mm256_alignr_epi8(
-        rF_rE_rD_rC_rB_gF_gE_gD_gC_gB_bF_bE_bD_bC_bB_bA,
+        /*                                           */ rF_rE_rD_rC_rB_gF_gE_gD_gC_gB_bF_bE_bD_bC_bB_bA,
         g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0_b9_b8_b7_b6_b5_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0,
         6);
 
@@ -93,7 +93,9 @@ static __attribute__((always_inline)) inline void GatherRGBx8_avx(
     __m256i xx_xx_xx_xx_xx_xx_xx_xx_bF_bE_bD_bC_bB_bA_b9_b8_xx_xx_xx_xx_xx_xx_xx_xx_b7_b6_b5_b4_b3_b2_b1_b0 =
         _mm256_permute4x64_epi64(b_8bit, _MM_SHUFFLE(0, 1, 0, 0));
 
-    //Unpack uint8 elements to uint16 elements.
+    // Unpack uint8 elements to uint16 elements.
+    // _mm256_cvtepu8_epi16 can't be used in replacement for _mm_cvtepu8_epi16, because it converts _mm128i to _mm256i.
+    // We have _m256i as input
     *rF_rE_rD_rC_rB_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0 =
         _mm256_unpacklo_epi8(
             xx_xx_xx_xx_xx_xx_xx_xx_rF_rE_rD_rC_rB_rA_r9_r8_xx_xx_xx_xx_xx_xx_xx_xx_r7_r6_r5_r4_r3_r2_r1_r0,

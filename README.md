@@ -19,7 +19,7 @@ Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Ro
 - naive solution is single threaded
 - processors can calculate 128/256 bit at once, but only part of it is used in a single iteration
 - data is in rgbrgbrgbrgb format, but rrrrggggbbbb is needed
-- memory is not aligned
+- memory is not aligned, meaning that in order to read 8-bytes we may need to actually read 16-bytes
 
 ## Solution attempt
 ### Multithreaded
@@ -69,7 +69,6 @@ This implementation if completly copied from a Stackoverflow post by [Rotem](htt
 Only modification made was making it compatible with pure C, since it was using C++ features (see [memory_simd_sse.c](cpu/algorithms/memory_simd_sse.c))
 
 It has 2 major optimization areas.
-But most importingly for me it also showed me how to work with the bit modification function in a structured manner by naming the variables according to the pixel bytes it contains.
 
 First it utilizes shuffle (`_mm_shuffle_epi8`), concat (`_mm_alignr_epi8`) and shift (`_mm_slli_si128`) functions to solve the problem of rearranging the bytes from rgbrgbrgbrgb to rrrrggggbbbb.
 For example one can group the bytes according to their color like this.
@@ -91,19 +90,45 @@ __m128i g3_g2_g1_g0_r3_r2_r1_r0_zz_zz_zz_zz_zz_zz_zz_zz = _mm_slli_si128(r3_r2_r
 __m128i zz_zz_zz_zz_r7_r6_r5_r4_b7_b6_b5_b4_g7_g6_g5_g4 = _mm_srli_si128(r7_r6_r5_r4_b7_b6_b5_b4_g7_g6_g5_g4_r7_r6_r5_r4, 4);
 ```
 
-Additionally it sacrifices some accuracy by calculating the gray value with 16-bit integers instead of 32-bit floats
+Additionally it sacrifices some accuracy by calculating the gray value with 16-bit integers instead of 32-bit floats.
+But the most important for me is, that it showed me how to work with the bit modification functions in a structured manner by naming the variables according to the bytes it contains.
 
 ### SIMD AVX
-With this knowlegde the next step is using the AVX instruction set, which operates on 256-bit registers unlike 128-bit in SSE.
-This in theory allowes one to process twice the amount of pixels at once.
-Unfortunatly many AVX functions behave slightly different compared to their SSE counterpart in the form of only operating within 128-bit lanes instead of across the whole 256-bit register.
+With this knowledge the next step is using the AVX instruction set, which operates on 256-bit registers unlike 128-bit in SSE.
+This in theory allows one to process twice the amount of pixels at once.
+Unfortunately many AVX functions behave slightly different compared to their SSE counterpart in the form of only operating within 128-bit lanes instead of across the whole 256-bit register.
 This means that it is not possible to shuffle a byte from the lower lane to the upper lane with `_mm256_shuffle_epi8`.
-So in a register with `gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0`, where the lane split is between g5 and r5, it is not possible to group all red values because r6, r7, r8 and r9 are in the upper lane, whereas the other values are in the lower lane.
+So in a register with `gA_rA_b9_g9_r9_b8_g8_r8_b7_g7_r7_b6_g6_r6_b5_g5_r5_b4_g4_r4_b3_g3_r3_b2_g2_r2_b1_g1_r1_b0_g0_r0`, where the lane split is between g5 and r5, it is not possible to group all red values because r6, r7, r8 and r9 are in the upper lane whereas the other values are in the lower lane.
 
-Because of this, for AVX a different set of functions is used in order to group the bytes of each color.
-`_mm256_shuffle_epi8` is still used, knowing the restriction, in order to group the bytes in each lane in preparation for the other function.
+Because of this for AVX a different set of functions is used in order to group the bytes of each color.
+The central function is `_mm256_blendv_epi8(__m256i a, __m256i b, __m256i mask)` which allows to combine parts of the first register with the second one according to the mask.
+```C
+__m256i g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0_b9_b8_b7_b6_b5_rA_r9_r8_r7_r6_r5_r4_r3_r2_r1_r0 =
+    _mm256_blendv_epi8(
+        g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0_b9_b8_b7_b6_b5_rA_r9_r8_r7_r6_gA_g9_g8_g7_g6_g5,
+        b9_b8_b7_b6_b5_rA_r9_r8_r7_r6_gA_g9_g8_g7_g6_g5_g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0,
+        _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /**/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 128, 128, 128, 128, 128));
+```
+In this example we want to combine the group of red bytes `r5_r4_r3_r2_r1_r0` of the second register with the group of `rA_r9_r8_r7_r6` in the first one.
+They are deliberately lined up, so that in the first register before the group of `rA_r9_r8_r7_r6` is exactly enough space to fit in the first 6 bytes ``r5_r4_r3_r2_r1_r0`.
+Accordingly the mask is set to use all values of the first register, except the first 6 ones.
 
+This setup is done through `_mm256_shuffle_epi8` with which we can still shuffle inside the lanes in order to group the bytes.
+Afterwards we can use `_mm256_permute2x128_si256(__m256i a, __m256i b, 1)` in order to swap the lanes so that we can blend them.
+In some places `_mm256_alignr_epi8` is also used.
+Like in SSE it concatenates registers, although it only works on 128-bit lanes.
 
+For the exact steps see [memory_simd_avx.c](cpu/algorithms/memory_simd_avx.c) where the variable names reflect the outcome of a function.
+
+Another change is aligning the memory of the input and output image.
+This allows using the aligned load and store functions instead of the unaligned ones (`_mm256_load_si256` instead of `_mm256_loadu_si256`).
+With this we may avoid loading data that is spread across boundaries of a address and thus reducing memory transfer.
+The output is aligned with by allocating the memory with `aligned_alloc(32, size)` instead of `malloc(size)`.
+For the input image the library used to load the image `stb_image.h`, allows to override the default `malloc` function used.
+We do so be defining following values before the include of that library.
+```C
+#define STBI_MALLOC(sz)           aligned_alloc(32, size)
+```
 
 ## Benchmarks
 With 
@@ -175,18 +200,38 @@ With
 |Intel Core i9-9880H (8 Core)|simd_avx|128|0.027279|5663.5644|
 
 ## Review
+A review of the AVX variant
 ### Memory Bottleneck
-AVX
-27000*6000 = 162000000 (pixel)
-pixel per iteration = 32
-iterations = 162000000 / 32 = 5062500
-bytes read per iteration = 128 
-bytes read = 128 * 5062500 = 648000000
-bytes written = 162000000
-bytes tranferred = 648000000 + 162000000 = 810000000
-810000000 bytes = 772.4761mb
-on average 30ms for 772.4761mb of image => 25749mb/s data transfer => 25,14gb/s data transfer
-memory bandwidth of CPU is 48gb/s in dual channel mode, 24gb in single channel. https://en.wikichip.org/wiki/amd/ryzen_5/3600
-But with the relativly small 
+The memory access should not be the bottleneck.
+There are many indicator for this.
+
+First one being that the Intel Core i9-9880H performs better than the AMD Ryzen 5 3600 even though in has a memory bandwidth of only [39.74 GiB/s](https://en.wikichip.org/wiki/intel/core_i9/i9-9880h) compared to [47.68 GiB/s](https://en.wikichip.org/wiki/amd/ryzen_5/3600).
+
+Second one being that the alignment of the memory in the AVX step, did not change the performance in any noticeable way.
+One can test it out by replacing `_mm256_load_si256` with `_mm256_loadu_si256` and `_mm256_store_si256` with `_mm256_storeu_si256` and reverting the changes to align the memory.
+
+Lastly doing a calculation of the theoretical amount of transferred data, we are below the available bandwidth.
+```
+pixel = 27000*6000 = 162000000
+duration = 30ms = 0.03s
+pixel_per_iteration = 32
+bytes_per_pixel = 3
+iterations = pixel / pixel_per_iteration = 5062500
+bytes_read_per_iteration = 128 // it is not bytes_per_pixel*pixel_per_iteration=3*32=96, because we are effectively reading so many bytes in this sequence: 32 - 16 - 32 - 16. But because each read is 32-bytes, it results in 4*32=128 bytes read. Because the CPU address width is 8-byte there are no considerations here with 32-byte aligned memory.
+bytes_read = bytes_read_per_iteration * iterations = 128 * 5062500  = 648000000
+bytes_written = pixel * bytes_per_pixel = 162000000 * 3 = 486000000
+bytes_transferred = bytes_read + bytes_written = 648000000 + 486000000 = 1134000000
+transfer_rate = bytes_transferred / duration = 1134000000 (byte) / 0.03s = 37800000000 b/s = 35,20 Gb/s 
+```
+
+### Latency and Throughput
+Each SIMD functions has a different latency and throughput.
+Latency means how many clock cycles it takes for the calculation to be complete and throughput means how much of a clock cycle the operations takes.
+Taking [_mm256_load_si256](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm256_load_si256&ig_expand=1935,515,305,4291) as example on the Haswell architecture.
+It has a latency of 1 and throughput of 0.25.
+This mean we can load 4 independent datasets in a single clock cycle.
+This is a source of optimization, that was not done here.
+Instead functions were selected purely on being able to arrange the bytes in a way that was needed.
+The linked intrinsic guide is for Intel, so one for AMD would need to be found first.
 
 ## Conclusion
