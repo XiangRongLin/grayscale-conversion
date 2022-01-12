@@ -78,7 +78,7 @@ now we write the result into the outputimage
  output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f 
 ```
 ### we are now back on the Host
-The kernel call is asynchronous. But in our case this doesnt bother us because we only have one stream so cudamemcopy waits until the GPU has finished.
+The kernel call is asynchronous. But in our case this doesnt bother us because we only have one stream so cudaMemcpy waits until the GPU has finished.
 Now we copy the data back from the Device to the Host
 ```C
 cudaMemcpy(host_grey, device_grey, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
@@ -101,6 +101,8 @@ see that the GPU is only 1,8% of the time busy with computing. The rest is alloc
 
 The Orange bars are all the called cuda functions like cudamalloc.
 The blue bar is the kernel activity
+
+There is also a huge overhead from the cudaMemcpy call and the actual Memcpy operation
 
 ## Conclusion
 
