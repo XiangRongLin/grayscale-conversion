@@ -104,8 +104,6 @@ The blue bar is the kernel activity
 
 There is also a huge overhead from the cudaMemcpy call and the actual Memcpy operation
 
-## Conclusion
-
 # CPU
 ## Problem
 - naive solution is single threaded
@@ -286,8 +284,13 @@ With
 ### CPU comparison
 |CPU|algorithm|thread number|time in s|megapixel per s|
 |---|---|---|---|---|
+|AMD Ryzen 5 3600 (6 Core)|simd_sse|128|0.030711|5030.6157|
 |AMD Ryzen 5 3600 (6 Core)|simd_sse|32|0.030036|5143.7032|
 |AMD Ryzen 5 3600 (6 Core)|simd_avx|32|0.029775|5188.7483|
+|Intel Core i7-4710HQ (4 Core)|memory|128|0.080105|1928.6639|
+|Intel Core i7-4710HQ (4 Core)|simd_sse|128|0.056655|2726.9456|
+|Intel Core i7-4710HQ (4 Core)|simd_avx|128|0.055232|2797.2128|
+|Intel Core i9-9880H (8 Core)|memory|128|0.038570|4005.5441|
 |Intel Core i9-9880H (8 Core)|simd_sse|64|0.027484|5621.3304|
 |Intel Core i9-9880H (8 Core)|simd_avx|128|0.027279|5663.5644|
 
@@ -326,4 +329,11 @@ This is a source of optimization, that was not done here.
 Instead functions were selected purely on being able to arrange the bytes in a way that was needed.
 The linked intrinsic guide is for Intel, so one for AMD would need to be found first.
 
-## Conclusion
+### Number of Threads
+This is something that can be further investigated.
+Currently the were just discovered through trial and error without putting much thought behind them.
+
+# Conclusion
+Grayscale conversion is not suited to be computed with the GPU due to transfer 4 bytes of data for each pixel, which are 5 floating point operations in order to convert it to grayscale.
+The CPU on the other hand is very suited with the easiest performance improvement being to parallelize it and grouping the memory access. This can be easily done because each calculation is independent from another one.
+SIMD can be used to further improve it, but only in the very smallest margins at the cost of huge developer overhead.
