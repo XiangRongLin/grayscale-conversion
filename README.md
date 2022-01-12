@@ -95,15 +95,15 @@ cudaFree(device_grey);
 
 ## Review
 Looking at the Performance is interessting for a 27000x6000 pixel image the calculation takes 0,007 seconds but here is the catch. With nvprof or nvvp we can 
-see that the GPU is only 1,8% of the time busy with computing. The rest is allocation (0,005 seconds) and memory transfer(0,15 seconds).
+see that the GPU is only 1,8% of the time busy with computing. The rest is allocation and memory transfer.
 
-|Allocation |memcopy HtoD |memcopy DtoH |Kernel in |Gesamt | 
-|---|---|---|---|---|
-|5.12566 |0.1166639|0.033904|0.00754453|0.15250127|
+|Allocation in seconds |memcopy HtoD in seconds |memcopy DtoH in seconds |Kernel in seconds
+|---|---|---|---|
+|0.018321 |0.054598|0.048913|0.00754453|
 
 ![cuda_profiling](images/cuda_profiling.png)
 
-The Orange bars are all the called cuda functions like cudamalloc.
+The orange bars are all the called cuda functions like cudamalloc.
 The blue bar is the kernel activity
 
 There is also a huge overhead from the cudaMemcpy call and the actual Memcpy operation. 
@@ -129,7 +129,14 @@ instead of allocating host_grey with malloc we use cudaMallocHost which will all
 So the Memory transfer between Host and Device should be faster. 
 ![cuda_profiling](images/cuda_profiling_pinned.png)
 
-well yes and no. The Memcpy HtoD is faster compared to the nonpinnend version (37 ms vs 55 ms) the cudaMemcpy call still takes (100 ms instead of 120 ms in the nonpinnend version). So we get a minimal transfer speed-up
+well yes and no. The Memcpy HtoD is faster compared to the nonpinnend version(see [greyscale.cu](cuda/greyscale.cu)). (37 ms vs 55 ms) the cudaMemcpy call still takes (100 ms instead of 120 ms in the nonpinnend version). The Memcpy DtoH is also faster (12 ms v 37 ms) and for the cudaMemcpy call (19,8 ms vs 58 ms)
+
+So we get a minimal transfer speed-up but the Host allocation takes now longer (27 ms)
+
+|Allocation in seconds |memcopy HtoD in seconds |memcopy DtoH in seconds |Kernel in seconds |
+|---|---|---|---|
+|0.292566 |0.032401|0.0121894|0.0075523|0.086|
+
 
 # CPU
 ## Problem

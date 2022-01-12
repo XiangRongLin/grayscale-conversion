@@ -61,7 +61,7 @@ int main (){
 
     // measure the time taken to convert the image to grey with copy to device and back to host
     start = clock();
-    cudaMemcpyAsync(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice,0);
+    cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
     
     //calls the kernel function
     ConvertToGrey<<<Grid, Block>>>(device_rgb, device_grey, rows, columns);
