@@ -27,6 +27,8 @@ Grids:
 Blocks are grouped into Grid
 Each Kernel launch creates one single Grid
 
+https://developer-blogs.nvidia.com/wp-content/uploads/2020/06/kernel-execution-on-gpu-1-625x438.png
+
 We have an input image which is loaded by stbi_load and returns and unsigned char.
 Then we allocate memory for our grayscale image which the results will be copied in
 
@@ -35,22 +37,25 @@ So now we need to allocate memory for our RGB image on the Device. We do this wi
 cudaMalloc(&device_rgb, sizeof(uchar3) * pixel_size*3 );
 ```
 we also allocate memory for our greyimage on the Device with
+```C
 cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
-```C
+```
 with cudaMemcpy the Imagedata will be copied to the memory we allocated for our RBG image. We also have to pass the size of the copied data and in which direction we are copying.
-cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
 ```C
+cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
+```
 Now the data is in the GPU memory and we are able to launch our kernel.
 
 A Kernelfunction looks like a normal function but has a __global__
 keyword befor it. With the global identifer we define a function that will run on the Device.
-
+```C
 ConvertToGrey<<<Grid, Block>>>(device_rgb, device_grey, rows, columns);
-
+```
 As parameters we pass our already allocated device_rgb and device_grey references and the rows and columns which are basically the width and height of our image.
 If we take a look at the Kernel function the first thing we see is this
+```C
 int index_x = threadIdx.x + blockIdx.x * blockDim.x;
-
+```
 ThreadIdx, blockIdx and blockDim are cuda variables. We can access them when we run on the Device.
 threadIdx : thread index in the block
 blockIdx : block index in the grid
