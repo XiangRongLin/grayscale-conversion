@@ -116,7 +116,10 @@ For this specific task there is no performance gain from using shared memory ins
 ## Memorytransfer between GPU and CPU
 There is no free lunch
 In general avoid memory transfer between device and
-host. Its recommended to to copy the data to the device. Then calculate on the device and then copy the data back.
+host. Its recommended to to copy the data to the device. 
+Then calculate on the device and then copy the data back.
+
+like in ([greyscale.cu](cuda/greyscale.cu))
 
 ### pinned memory
 Generaly pinned memory is recommended if we want to overlap copy and comput
@@ -136,6 +139,13 @@ So we get a minimal transfer speed-up but the Host allocation takes now longer (
 |Allocation in seconds |memcopy HtoD in seconds |memcopy DtoH in seconds |Kernel in seconds |
 |---|---|---|---|
 |0.292566 |0.032401|0.0121894|0.0075523|0.086|
+
+
+### final runtime with CUDA allocation, memory transfer and kernel execution time in seconds
+
+|greyscale|greyscalePinnedMemory| greyscaleV2|
+|---|---|---|
+|0.16000 |0.16200| 0.1100|
 
 
 # CPU

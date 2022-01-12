@@ -5,8 +5,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../baseline/stb_image_write.h"
 #include <time.h>
-
-
 #include <algorithm>
 
 //this function runs on the device(gpu)
@@ -35,9 +33,21 @@ int main (){
     cudaError_t result;
     pixel_size = columns * rows ;
 
+    int thread = 16;
+    const dim3 Block(thread, thread);
+    const dim3 Grid((columns + Block.x - 1) / Block.x, (rows + Block.y - 1) / Block.y);
+    clock_t start, end;
+
+ //for profiling purposes
     cudaFree(0);
-    result =  cudaHostRegister(Image, pixel_size *3, cudaHostRegisterPortable);	
-    //for profiling purposes
+    start = clock();
+  result =  cudaHostRegister(Image, pixel_size *3, cudaHostRegisterPortable);	
+     if(result != cudaSuccess) {
+    printf("Error: cudaHostRegister returned %s (code %d)\n", cudaGetErrorString(result), result);
+    printf("Error in cudaHostRegister: %s.\n", cudaGetErrorString(result));
+    return -1;
+    }
+   
 
     cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
     //Allocate device memory for the image
@@ -47,20 +57,8 @@ int main (){
     //sets device memory to a value.
 	cudaMemset(device_grey, 0, sizeof(unsigned char) * pixel_size);
 
-    if(result != cudaSuccess) {
-    printf("Error: cudaHostRegister returned %s (code %d)\n", cudaGetErrorString(result), result);
-    printf("Error in cudaHostRegister: %s.\n", cudaGetErrorString(result));
-    return -1;
-    }
-
-    int thread = 16;
-    const dim3 Block(thread, thread);
-    const dim3 Grid((columns + Block.x - 1) / Block.x, (rows + Block.y - 1) / Block.y);
-
-    clock_t start, end;
-
     // measure the time taken to convert the image to grey with copy to device and back to host
-    start = clock();
+    
     cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
     
     //calls the kernel function
@@ -76,9 +74,9 @@ int main (){
     double time =(double)(end-start)/CLOCKS_PER_SEC;
     printf("gpu execution and copy time is %.30lf\n", time);
     
-    // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, host_grey, 100);
+   //  stbi_write_jpg("../images/grey.jpg", columns, rows, 1, host_grey, 100);
 
-  //   stbi_write_png("../images/.grey.png", columns, rows,1,host_grey, columns );
+     //stbi_write_png("../images/.grey.png", columns, rows,1,host_grey, columns );
 
     // free the allocated memory on the host and the device
     cudaFree(host_grey);

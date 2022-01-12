@@ -5,8 +5,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../baseline/stb_image_write.h"
 #include <time.h>
-
-
 #include <algorithm>
 
 //this function runs on the device(gpu)
@@ -33,8 +31,15 @@ int main (){
     uchar3 *device_rgb;
     unsigned char *host_grey, *device_grey;
     pixel_size = columns * rows ;
-    host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
+   
+    int thread = 16;
+    const dim3 Block(thread, thread);
+    const dim3 Grid((columns + Block.x - 1) / Block.x, (rows + Block.y - 1) / Block.y);
+
+    clock_t start, end;
     cudaFree(0);
+    start = clock();
+    host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
     //for profiling purposes
     //Allocate device memory for the image
     cudaMalloc(&device_rgb, sizeof(uchar4) * pixel_size*3 );
@@ -42,15 +47,8 @@ int main (){
 	cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
     //sets device memory to a value.
 	cudaMemset(device_grey, 0, sizeof(unsigned char) * pixel_size);
-
-    int thread = 16;
-    const dim3 Block(thread, thread);
-    const dim3 Grid((columns + Block.x - 1) / Block.x, (rows + Block.y - 1) / Block.y);
-
-    clock_t start, end;
-
     // measure the time taken to convert the image to grey with copy to device and back to host
-    start = clock();
+    
     cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
     
     //calls the kernel function
@@ -62,7 +60,7 @@ int main (){
     // Copy the data back to the host
     cudaMemcpy(host_grey, device_grey, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
 
-     end = clock();
+    end = clock();
     double time =(double)(end-start)/CLOCKS_PER_SEC;
     printf("gpu execution and copy time is %.30lf\n", time);
     
