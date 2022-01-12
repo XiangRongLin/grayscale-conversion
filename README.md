@@ -1,12 +1,14 @@
 Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Rong Lin](https://github.com/XiangRongLin) for the lecture "High Performance Computing" at the "Hochschule für Technik Stuttgart"
 
 # Motivation
-RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's perfect for the GPU. Each Pixel can be calculated/converted independently. 
+RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's perfect for multithreaded programms. Each Pixel can be calculated/converted independently. 
 # GPU
 
-## Problem
+## Problems
 - memory transfer between Host and Device
 - when to start measure time ? Before the kernel launch, before the memcopy or before the allocation 
+- The first cuda function calls takes a lot of time. For benchmarking reasons i just call a cudaFree(0).
+Now the first cuda call (most of the time its cudaMalloc) takes for example 0,023 seconds instead of 0,153 seconds
 ## Solution attempt
 
 ## Implementation
@@ -102,9 +104,30 @@ see that the GPU is only 1,8% of the time busy with computing. The rest is alloc
 The Orange bars are all the called cuda functions like cudamalloc.
 The blue bar is the kernel activity
 
-There is also a huge overhead from the cudaMemcpy call and the actual Memcpy operation
+There is also a huge overhead from the cudaMemcpy call and the actual Memcpy operation. 
+
+
 
 ## Conclusion
+In this case a good and smart implementaion like (see [memory_simd_sse.c](cpu/algorithms/memory_simd_sse.c)) is faster than the GPU. Its more easy to implement it for the GPU than doing the optimisation for the CPU. 
+
+
+## Memory on the GPU
+The GPU has different kinds of Memory. The biggest one is the Global memory. Its located on the device Dram. There are other Types of Memory(like Local memory, constant memory) located on the Dram but we dont need them now. For optimisation is the On Chip memory more interessting especially the Share Memory. Its very fast so why we didnt used it to make the Kernel function even faster.
+For this specific task there is no performance gain from using shared memory instead of the global memory because the shared memory doesnt reuse any data so the number of global memory reads stays the same. Also the calculation time only takes arround 2% of the time so maybe its better to focus on the other 98%. 
+
+## Memorytransfer between GPU and CPU
+There is no free lunch
+In general avoid memory transfer between device and
+host. Its recommended to to copy the data to the device. Then calculate on the device and then copy the data back.
+
+### pinned memory
+Generaly pinned memory is recommended if we want to overlap copy and comput
+![pinnendMemory](images/pagableDataTransfer.png)
+https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg
+
+Instead of malloc() we could use cudaMallocHost(). 
+
 
 # CPU
 ## Problem
