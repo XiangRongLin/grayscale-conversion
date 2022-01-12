@@ -1,14 +1,66 @@
 Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Rong Lin](https://github.com/XiangRongLin) for the lecture "High Performance Computing" at the "Hochschule für Technik Stuttgart"
 
 # Motivation
-
+RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's perfect for the GPU. Each Pixel can be calculated/converted independently. 
 # GPU
 
 ## Problem
-
+Memory transfer between Host and Device
 ## Solution attempt
 
 ## Implementation
+### GPU Workflow
+Host = CPU 
+Device = GPU
+The GPU needs to acces the Data from the main memory. Then the CPU instructs the GPU. The calculation will be  parallel  executed in cores and the result will be copied back to the main memory.
+
+Thread
+
+Each Thread gets mapped to one cuda core
+
+Blocks:
+
+Threads are grouped into Blocks
+
+Grids:
+
+Blocks are grouped into Grid
+Each Kernel launch creates one single Grid
+
+We have an input image which is loaded by stbi_load and returns and unsigned char.
+Then we allocate memory for our grayscale image which the results will be copied in
+
+So now we need to allocate memory for our RGB image on the Device. We do this with CudaMalloc
+```C
+cudaMalloc(&device_rgb, sizeof(uchar3) * pixel_size*3 );
+```
+we also allocate memory for our greyimage on the Device with
+cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
+```C
+with cudaMemcpy the Imagedata will be copied to the memory we allocated for our RBG image. We also have to pass the size of the copied data and in which direction we are copying.
+cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
+```C
+Now the data is in the GPU memory and we are able to launch our kernel.
+
+A Kernelfunction looks like a normal function but has a __global__
+keyword befor it. With the global identifer we define a function that will run on the Device.
+
+ConvertToGrey<<<Grid, Block>>>(device_rgb, device_grey, rows, columns);
+
+As parameters we pass our already allocated device_rgb and device_grey references and the rows and columns which are basically the width and height of our image.
+If we take a look at the Kernel function the first thing we see is this
+int index_x = threadIdx.x + blockIdx.x * blockDim.x;
+
+ThreadIdx, blockIdx and blockDim are cuda variables. We can access them when we run on the Device.
+threadIdx : thread index in the block
+blockIdx : block index in the grid
+blockDim : number of threads by blocks.
+
+We want the unique Grid index of a thread because threadIdx is only unique in its own Thread Block. So we multiply the Blocks index with the block dimension and add the Threadindex
+
+
+
+
 
 ## Review
 
