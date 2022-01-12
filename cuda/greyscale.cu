@@ -19,8 +19,9 @@ void ConvertToGrey(uchar3  *input, unsigned char *output, int rows, int columns)
 
 	if (index_x < columns && index_y < rows)
 	{
+        //1d coordinate of the image
 		int output_offset = index_y * columns + index_x;
-       uchar3  rgb = input[output_offset];	
+        uchar3  rgb = input[output_offset];	
 	    output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f ;
     }
 }
@@ -28,15 +29,17 @@ void ConvertToGrey(uchar3  *input, unsigned char *output, int rows, int columns)
 //runs on the host
 int main (){
     int rows,columns,channels,pixel_size;
-    unsigned char* Image = stbi_load("../images/PIA18164.jpg", &columns, &rows, &channels, 0);
+    unsigned char* Image = stbi_load("../images/PIA03239.jpg", &columns, &rows, &channels, 0);
     uchar3 *device_rgb;
     unsigned char *host_grey, *device_grey;
 
     pixel_size = columns * rows ;
 
     host_grey = (unsigned char *)malloc(sizeof(unsigned char*)* pixel_size);
-
-  //  cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
+    
+    //for profiling purposes
+    cudaFree(0);
+    //cudaMallocHost(&host_grey, sizeof(unsigned char)* pixel_size);
     //Allocate device memory for the image
     cudaMalloc(&device_rgb, sizeof(uchar4) * pixel_size*3 );
     //allocate device memory for the grey image
@@ -60,7 +63,6 @@ int main (){
     // i dont think i need this but i will leave it here..
     // cudaDeviceSynchronize();
    
-
     // Copy the data back to the host
     cudaMemcpy(host_grey, device_grey, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
 
@@ -68,11 +70,11 @@ int main (){
     double time =(double)(end-start)/CLOCKS_PER_SEC;
     printf("gpu execution and copy time is %.30lf\n", time);
     
-     //stbi_write_jpg("../images/grey.jpg", columns, rows, 1, h_grey, 100);
+    // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, host_grey, 100);
 
-  //   stbi_write_png("../images/.grey.png", columns, rows, 1,h_grey, columns );
+    // stbi_write_png("../images/.grey.png", columns, rows, 3,host_grey, columns );
+
     // free the allocated memory on the host and the device
-    
     free(host_grey);
     cudaFree(device_rgb);
     cudaFree(device_grey);

@@ -31,7 +31,7 @@ int main()
     unsigned char* image_d;
     int N = width * height; 
     size_t size = N * sizeof(unsigned char) *3;
-	 int thread = 32;
+	 int thread = 16;
     const dim3 Block(thread, thread);
     const dim3 Grid((width + Block.x - 1) / Block.x, (height + Block.y - 1) / Block.y);
     cudaMalloc(&image_d, size);

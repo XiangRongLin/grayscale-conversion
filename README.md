@@ -5,7 +5,8 @@ RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's per
 # GPU
 
 ## Problem
-Memory transfer between Host and Device
+- memory transfer between Host and Device
+- when to start measure time ? Before the kernel launch, before the memcopy or before the allocation 
 ## Solution attempt
 
 ## Implementation
@@ -45,6 +46,7 @@ with cudaMemcpy the Imagedata will be copied to the memory we allocated for our 
 cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
 ```
 Now the data is in the GPU memory and we are able to launch our kernel.
+### We are now on the Device
 
 A Kernelfunction looks like a normal function but has a __global__
 keyword befor it. With the global identifer we define a function that will run on the Device.
@@ -61,13 +63,41 @@ threadIdx : thread index in the block
 blockIdx : block index in the grid
 blockDim : number of threads by blocks.
 
-We want the unique Grid index of a thread because threadIdx is only unique in its own Thread Block. So we multiply the Blocks index with the block dimension and add the Threadindex
+We want the unique Grid index of a thread because threadIdx is only unique in its own Thread Block. So we multiply the Blocks index with the block dimension and add the Threadindex.
+We do the same for the y index. And now we have the current pixel location
 
-
-
-
+1d coordinate of the greyscale image
+```C
+int output_offset = index_y * columns + index_x;
+```
+now we write the result into the outputimage
+```C
+ output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f 
+```
+### we are now back on the Host
+The kernel call is asynchronous. But in our case this doesnt bother us because we only have one stream so cudamemcopy waits until the GPU has finished.
+Now we copy the data back from the Device to the Host
+```C
+cudaMemcpy(host_grey, device_grey, sizeof(unsigned char) * pixel_size, cudaMemcpyDeviceToHost);
+```
+in the end we need to free the allocated memory on the Device
+```C
+cudaFree(device_rgb);
+cudaFree(device_grey);
+```
 
 ## Review
+Looking at the Performance is interessting for a 27000x6000 pixel image the calculation takes 0,007 seconds but here is the catch. With nvprof or nvvp we can 
+see that the GPU is only 1,8% of the time busy with computing. The rest is allocation (0,005 seconds) and memory transfer(0,15 seconds).
+
+|Allocation |memcopy HtoD |memcopy DtoH |Kernel in |Gesamt | 
+|---|---|---|---|---|
+|5.12566 |0.1166639|0.033904|0.00754453|0.15250127|
+
+![cuda_profiling](images/cuda_profiling.png)
+
+The Orange bars are all the called cuda functions like cudamalloc.
+The blue bar is the kernel activity
 
 ## Conclusion
 
