@@ -1,4 +1,4 @@
-Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Rong Lin](https://github.com/XiangRongLin) for the lecture "High Performance Computing" at the "Hochschule für Technik Stuttgart"
+Report by [Dennis Weggenmann](https://github.com/DennisWeggenmann) and [Xiang Rong Lin](https://github.com/XiangRongLin) for the lecture "High Performance Computing" during the winter semester 21/22 at "Hochschule für Technik Stuttgart"
 
 # Motivation
 RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's perfect for the GPU. Each Pixel can be calculated/converted independently. 
