@@ -4,9 +4,11 @@
 #include <math.h>
 #include <omp.h>
 
-#define STBI_MALLOC(sz)           _mm_malloc(sz,32)
-#define STBI_REALLOC(p,newsz)     realloc(p,newsz)
-#define STBI_FREE(p)              _mm_free(p)
+// 32 byte alignement, SIMD load&store commands need them
+// all values need to be defined if any of them is defined
+#define STBI_MALLOC(sz)  aligned_alloc(32, sz)
+#define STBI_REALLOC(p, newsz) realloc(p, newsz)
+#define STBI_FREE(p) free(p)
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../baseline/stb_image.h"
@@ -60,7 +62,12 @@ int main(int argc, char *argv[])
     printf("algo: %d; runs: %d ; threads: %d\n", algo, runs, threads);
 
     // Allocate target array for grayscale image
-    unsigned char *gray  = aligned_alloc(width * height, 32);
+    unsigned char *gray = aligned_alloc(32, width * height * sizeof(char));
+    if (gray == NULL)
+    {
+        printf("Err: allocating gray image\n");
+        exit(1);
+    }
     double time_sum = 0.0;
     omp_set_num_threads(threads);
 
@@ -76,7 +83,7 @@ int main(int argc, char *argv[])
         case 1:
             convert_baseline(img, width, height, channels, threads, gray);
             break;
-        case 2: 
+        case 2:
             convert_memory(img, width, height, channels, threads, gray);
             break;
         case 3:
