@@ -23,7 +23,6 @@ void setPixelToGrayscale(unsigned char *image, int rows, int columns)
 }
 }
 
-
 int main()
 {
 	int width, height, channels;
@@ -36,6 +35,7 @@ int main()
     const dim3 Grid((width + Block.x - 1) / Block.x, (height + Block.y - 1) / Block.y);
     cudaFree(0);
     clock_t start, end;
+    cudaHostRegister(image, size, cudaHostRegisterPortable);	
     cudaMalloc(&image_d, size);
     start = clock();
     cudaMemcpy(image_d, image,  size, cudaMemcpyHostToDevice);
