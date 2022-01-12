@@ -12,7 +12,9 @@ RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's per
 ## Implementation
 ### GPU Workflow
 Host = CPU 
+
 Device = GPU
+
 The GPU needs to acces the Data from the main memory. Then the CPU instructs the GPU. The calculation will be  parallel  executed in cores and the result will be copied back to the main memory.
 
 Thread
