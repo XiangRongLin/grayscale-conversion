@@ -132,6 +132,7 @@ Instead of malloc() we could use cudaMallocHost(). This will allocate the data i
 instead of allocating host_grey with malloc we use cudaMallocHost which will allocate in the Pinnend Memory.
 
 So the Memory transfer between Host and Device should be faster. 
+
 ![cuda_profiling](images/cuda_profiling_pinned.png)
 
 well yes and no. The Memcpy HtoD is faster compared to the nonpinnend version(see [greyscale.cu](cuda/greyscale.cu)). (37 ms vs 55 ms) the cudaMemcpy call still takes (100 ms instead of 120 ms in the nonpinnend version). The Memcpy DtoH is also faster (12 ms v 37 ms) and for the cudaMemcpy call (19,8 ms vs 58 ms)
