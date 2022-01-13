@@ -39,7 +39,7 @@ Each Kernel launch creates one single Grid
 
 https://developer-blogs.nvidia.com/wp-content/uploads/2020/06/kernel-execution-on-gpu-1-625x438.png
 
-We have an input image which is loaded by stbi_load and returns and unsigned char.
+We have an input image which is loaded by stbi_load and returns an unsigned char.
 Then we allocate memory for our grayscale image which the results will be copied in
 
 So now we need to allocate memory for our RGB image on the Device. We do this with CudaMalloc
@@ -50,12 +50,12 @@ we also allocate memory for our greyimage on the Device with
 ```C
 cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
 ```
-with cudaMemcpy the Imagedata will be copied to the memory we allocated for our RBG image. We also have to pass the size of the copied data and in which direction we are copying.
+with cudaMemcpy the Imagedata will be copied to the memory we allocated for our RBG image. We also have to pass the size of the copied data and in which direction we are going to copy.
 ```C
 cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
 ```
 Now the data is in the GPU memory and we are able to launch our kernel.
-### We are now on the Device
+### We are on the Device now
 
 A Kernelfunction looks like a normal function but has a __global__
 keyword befor it. With the global identifer we define a function that will run on the Device.
@@ -83,7 +83,7 @@ now we write the result into the outputimage
 ```C
  output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f 
 ```
-### we are now back on the Host
+### we are back on the Host now
 The kernel call is asynchronous. But in our case this doesnt bother us because we only have one stream so cudaMemcpy waits until the GPU has finished.
 Now we copy the data back from the Device to the Host
 ```C
@@ -96,7 +96,7 @@ cudaFree(device_grey);
 ```
 
 ## Review
-Looking at the Performance is interessting for a 27000x6000 pixel image the calculation takes 0,007 seconds but here is the catch. With nvprof or nvvp we can 
+Looking at the Performance its interessting for a 27000x6000 pixel image the calculation takes 0,007 seconds but here is the catch. With nvprof or nvvp we can 
 see that the GPU is only 1,8% of the time busy with computing. The rest is allocation and memory transfer.
 
 |Allocation in seconds |memcopy HtoD in seconds |memcopy DtoH in seconds |Kernel in seconds
@@ -112,7 +112,7 @@ There is also a huge overhead from the cudaMemcpy call and the actual Memcpy ope
 
 
 ## Memory on the GPU
-The GPU has different kinds of Memory. The biggest one is the Global memory. Its located on the device Dram. There are other Types of Memory(like Local memory, constant memory) located on the Dram but we dont need them now. For optimisation is the On Chip memory more interessting especially the Share Memory. Its very fast so why we didnt used it to make the Kernel function even faster.
+The GPU has different kinds of memory. The biggest one is the global memory. Its located on the device Dram. There are other types of memory(like Local memory, constant memory) located on the Dram but we dont need them now. For optimisation is the On Chip memory more interessting especially the Shared Memory. Its very fast so why we didnt used it to make the Kernel function even faster.
 For this specific task there is no performance gain from using shared memory instead of the global memory because the shared memory doesnt reuse any data so the number of global memory reads stays the same. Also the calculation time only takes arround 2% of the time so maybe its better to focus on the other 98%. 
 
 ## Memorytransfer between GPU and CPU
@@ -124,11 +124,11 @@ Then calculate on the device and then copy the data back.
 like in ([greyscale.cu](cuda/greyscale.cu))
 
 ### pinned memory
-Generaly pinned memory is recommended if we want to overlap copy and comput
+Generaly pinned memory is recommended if we want to overlap copy and compute
 ![pinnendMemory](images/pagableDataTransfer.png)
 https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg
 
-Instead of malloc() we could use cudaMallocHost(). This will allocate the data in the Pinned Memory. I didnt find a way to direclty allocate the Image with the stb_image.h functionality. But luckily CUDA offers cudaHostRegister which will pinn memory that is already allocated.
+Instead of malloc() we could use cudaMallocHost(). This will allocate the data in the Pinned Memory. I didnt find a way to direclty allocate the Image with the stb_image.h functionality. But luckily CUDA offers cudaHostRegister which will pin memory that is already allocated.
 instead of allocating host_grey with malloc we use cudaMallocHost which will allocate in the Pinnend Memory.
 
 So the Memory transfer between Host and Device should be faster. 
