@@ -143,9 +143,13 @@ So we get a minimal transfer speed-up but the Host allocation takes now longer (
 
 ### final runtime with CUDA allocation, memory transfer and kernel execution time in seconds
 
-|greyscale|greyscalePinnedMemory| greyscaleV2|
+|greyscale|greyscalePinnedMemory| greyscaleV2(using pinned memory too)|
 |---|---|---|
 |0.16000 |0.16200| 0.1100|
+
+## Possible Solution and idea for future research
+It would be interessting to see how a grayscale conversation performs on a M1 with a Unified Memory Architecture. It could be faster since the GPU and CPU using that common pool of memory. There should
+be no need to transfer the data. The GPU will let the CPU know when its done
 
 
 # CPU
