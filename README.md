@@ -11,6 +11,8 @@ RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's per
 - when to start measure time ? Before the kernel launch, before the memcopy or before the allocation 
 - The first cuda function calls takes a lot of time. For benchmarking reasons i just call a cudaFree(0).
 Now the first cuda call (most of the time its cudaMalloc) takes for example 0,023 seconds instead of 0,153 seconds
+- cudaHostRegister was not able to allocate enough memory but after trying it 10 times its working
+
 ## Solution attempt
 
 ## Implementation
