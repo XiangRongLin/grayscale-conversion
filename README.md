@@ -55,7 +55,7 @@ with cudaMemcpy the Imagedata will be copied to the memory we allocated for our 
 cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
 ```
 Now the data is in the GPU memory and we are able to launch our kernel.
-### We are now on the Device
+### We are on the Device now
 
 A Kernelfunction looks like a normal function but has a __global__
 keyword befor it. With the global identifer we define a function that will run on the Device.
@@ -83,7 +83,7 @@ now we write the result into the outputimage
 ```C
  output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f 
 ```
-### we are now back on the Host
+### we are back on the Host now
 The kernel call is asynchronous. But in our case this doesnt bother us because we only have one stream so cudaMemcpy waits until the GPU has finished.
 Now we copy the data back from the Device to the Host
 ```C
