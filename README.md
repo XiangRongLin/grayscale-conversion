@@ -382,7 +382,7 @@ The linked intrinsic guide is for Intel, so one for AMD would need to be found f
 
 ### Number of Threads
 This is something that can be further investigated.
-Currently the were just discovered through trial and error without putting much thought behind them.
+Currently they were just discovered through trial and error without putting much thought behind them.
 
 # Conclusion
 Grayscale conversion is not suited to be computed with the GPU due to transfer 4 bytes of data for each pixel, which are 5 floating point operations in order to convert it to grayscale.
