@@ -144,7 +144,7 @@ So we get a minimal transfer speed-up but the Host allocation takes now longer (
 |0.292566 |0.032401|0.0121894|0.0075523|0.086|
 
 
-### final runtime with CUDA allocation, memory transfer and kernel execution time in seconds
+### final runtime with CUDA allocation, memory transfer and kernel execution time in seconds done on a GTX 1060 6GB
 
 |greyscale|greyscalePinnedMemory| greyscaleV2(using pinned memory too)|
 |---|---|---|
