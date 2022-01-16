@@ -1,2 +1,2 @@
 gray:
-	nvcc -allow-unsupported-compiler greyscale.cu -o greyscale
+	nvcc -allow-unsupported-compiler grayscale.cu -o grayscale
