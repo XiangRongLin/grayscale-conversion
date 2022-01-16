@@ -335,7 +335,7 @@ With
 ### CPU comparison
 |CPU|algorithm|thread number|time in s|megapixel per s|
 |---|---|---|---|---|
-|AMD Ryzen 5 3600 (6 Core)|simd_sse|128|0.030711|5030.6157|
+|AMD Ryzen 5 3600 (6 Core)|memory|128|0.030711|5030.6157|
 |AMD Ryzen 5 3600 (6 Core)|simd_sse|32|0.030036|5143.7032|
 |AMD Ryzen 5 3600 (6 Core)|simd_avx|32|0.029775|5188.7483|
 |Intel Core i7-4710HQ (4 Core)|memory|128|0.080105|1928.6639|
