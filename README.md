@@ -251,7 +251,7 @@ __m256i g4_g3_g2_g1_g0_b4_b3_b2_b1_b0_r5_r4_r3_r2_r1_r0_b9_b8_b7_b6_b5_rA_r9_r8_
         _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /**/ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 128, 128, 128, 128, 128));
 ```
 In this example we want to combine the group of red bytes `r5_r4_r3_r2_r1_r0` of the second register with the group of `rA_r9_r8_r7_r6` in the first one.
-They are deliberately lined up, so that in the first register before the group of `rA_r9_r8_r7_r6` is exactly enough space to fit in the first 6 bytes ``r5_r4_r3_r2_r1_r0`.
+They are deliberately lined up, so that in the first register before the group of `rA_r9_r8_r7_r6` is exactly enough space to fit in the first 6 bytes `r5_r4_r3_r2_r1_r0`.
 Accordingly the mask is set to use all values of the first register, except the first 6 ones.
 
 This setup is done through `_mm256_shuffle_epi8` with which we can still shuffle inside the lanes in order to group the bytes.
