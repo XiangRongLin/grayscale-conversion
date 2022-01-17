@@ -377,6 +377,7 @@ Taking [_mm256_load_si256](https://www.intel.com/content/www/us/en/docs/intrinsi
 It has a latency of 1 and throughput of 0.25.
 This mean we can load 4 independent datasets in a single clock cycle.
 This is a source of optimization, that was not done here.
+It could also be the source of the different benchmark results for the different algorithms between the CPUs.
 Instead functions were selected purely on being able to arrange the bytes in a way that was needed.
 The linked intrinsic guide is for Intel, so one for AMD would need to be found first.
 
