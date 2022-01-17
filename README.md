@@ -275,7 +275,7 @@ We do so be defining following values before the include of that library.
 With 
 - AMD Ryzen 5 3600 6-Core Processor 
 - gcc 11
-- compiled `gcc -fopenmp grayscale.c -lm -march=native -O`
+- compiled `gcc -fopenmp grayscale.c -lm -march=native -O3`
 - 20 runs each
 - 27000x6000 pixel image https://photojournal.jpl.nasa.gov/catalog/?IDNumber=PIA03239
 
