@@ -342,7 +342,7 @@ With
 |Intel Core i7-4710HQ (4 Core)|simd_sse|128|0.056655|2726.9456|
 |Intel Core i7-4710HQ (4 Core)|simd_avx|128|0.055232|2797.2128|
 |Intel Core i9-9880H (8 Core)|memory|128|0.038570|4005.5441|
-|Intel Core i9-9880H (8 Core)|simd_sse|64|0.027484|5621.3304|
+|Intel Core i9-9880H (8 Core)|simd_sse|64|0.041884|3688.6061|
 |Intel Core i9-9880H (8 Core)|simd_avx|128|0.027279|5663.5644|
 
 ## Review
