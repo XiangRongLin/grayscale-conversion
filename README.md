@@ -13,8 +13,6 @@ RGB to Grayscale conversation is an embarrassingly parallel Problem. So it's per
 Now the first cuda call (most of the time its cudaMalloc) takes for example 0,023 seconds instead of 0,153 seconds
 - cudaHostRegister was not able to allocate enough memory but after trying it 10 times its working
 
-## Solution attempt
-
 ## Implementation
 ### GPU Workflow
 Host = CPU 
@@ -22,6 +20,11 @@ Host = CPU
 Device = GPU
 
 The GPU needs to acces the Data from the main memory. Then the CPU instructs the GPU. The calculation will be  parallel  executed in cores and the result will be copied back to the main memory.
+
+![cuda_profiling](images/workflow.png)
+https://www.academia.edu/20415057/Parallel_Implementation_of_Grayscale_Conversion_in_Graphics_Hardware
+
+
 
 Thread
 
@@ -36,6 +39,9 @@ Grids:
 Blocks are grouped into a Grid
 
 Each Kernel launch creates one single Grid
+
+
+![cuda_profiling](images/Block-thread.svg)
 
 https://developer-blogs.nvidia.com/wp-content/uploads/2020/06/kernel-execution-on-gpu-1-625x438.png
 

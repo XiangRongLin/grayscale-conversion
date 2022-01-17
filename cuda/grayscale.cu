@@ -19,8 +19,8 @@ void ConvertToGrey(uchar3  *input, unsigned char *output, int rows, int columns)
 	{
         //1d coordinate of the image
 		int output_offset = index_y * columns + index_x;
-        uchar3  rgb = input[output_offset];	
-	    output[output_offset] = rgb.x * 0.299f +rgb.y* 0.587f +rgb.z * 0.114f ;
+        // 0.299f = single precision floating point
+	    output[output_offset] = input[output_offset].x * 0.299f +input[output_offset].y* 0.587f +input[output_offset].z * 0.114f ;
     }
 }
 
@@ -46,14 +46,12 @@ int main (){
     //allocate device memory for the grey image
 	cudaMalloc(&device_grey, sizeof(unsigned char) * pixel_size);
     //sets device memory to a value.
-	cudaMemset(device_grey, 0, sizeof(unsigned char) * pixel_size);
+	//cudaMemset(device_grey, 0, sizeof(unsigned char) * pixel_size);
     
     cudaMemcpy(device_rgb, Image, sizeof(unsigned char) * pixel_size*3 , cudaMemcpyHostToDevice);
     
     //calls the kernel function
     ConvertToGrey<<<Grid, Block>>>(device_rgb, device_grey, rows, columns);
-    
-   
     
     // i dont think i need this but i will leave it here..
     // cudaDeviceSynchronize();
@@ -64,7 +62,7 @@ int main (){
     double time =(double)(end-start)/CLOCKS_PER_SEC;
     printf("gpu execution and copy time is %.30lf\n", time);
     
-    // stbi_write_jpg("../images/grey.jpg", columns, rows, 1, host_grey, 100);
+   // stbi_write_jpg("../images/grey.jpg", columns, rows,1, host_grey, 100);
 
     //  stbi_write_png("../images/.grey.png", columns, rows,1,host_grey, columns );
     // free the allocated memory on the host and the device
